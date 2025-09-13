@@ -1,0 +1,4 @@
+**/charts/*
+*env
+test*.yaml
+*.png

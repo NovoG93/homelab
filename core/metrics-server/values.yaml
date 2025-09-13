@@ -1,0 +1,4 @@
+apiService:
+  insecureSkipTLSVerify: true
+args:
+  - --kubelet-insecure-tls
