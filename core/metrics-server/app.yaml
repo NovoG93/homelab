@@ -1,0 +1,4 @@
+name: metrics-server
+path: core/metrics-server
+namespace: kube-system
+project: default

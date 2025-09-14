@@ -1,0 +1,4 @@
+name: metallb
+path: core/metallb-system
+namespace: metallb-system
+project: default
