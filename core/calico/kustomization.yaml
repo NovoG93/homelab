@@ -4,6 +4,8 @@ metadata:
   name: kustomization
 namespace: tigera-operator
 
+resources:
+- namespace.yaml
 
 helmGlobals:
   chartHome: ../../helmCharts/

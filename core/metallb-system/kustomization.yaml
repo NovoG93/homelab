@@ -17,6 +17,6 @@ helmCharts:
   name: metallb
   repo: https://metallb.github.io/metallb
   version: 0.14.9
-  releaseName: metrics-server
+  releaseName: metallb
   namespace: metallb-system
   valuesFile: values.yaml

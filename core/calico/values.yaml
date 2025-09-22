@@ -6,7 +6,7 @@ installation:
     type: Calico
   calicoNetwork:
     bgp: Disabled                 # Use overlay instead of BGP:contentReference[oaicite:1]{index=1}
-    natOutgoing: Enabled
     ipPools:
       - cidr: 10.0.0.0/16         # Pod network CIDR (non-overlapping with home LAN)
         encapsulation: VXLAN      # Encapsulation for overlay networking:contentReference[oaicite:2]{index=2}
+        natOutgoing: Enabled
