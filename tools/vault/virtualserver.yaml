@@ -1,0 +1,23 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: vault
+  annotations:
+    # external-dns will read the host from .spec.host
+    external-dns.alpha.kubernetes.io/hostname: "vault.novotny.live"
+  labels:
+    ignore-ts: "true"
+spec:
+  externalDNS:
+    enable: true
+  host: vault.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: vault
+    service: vault-ui
+    port: 8200
+  routes:
+  - path: /
+    action:
+      pass: vault

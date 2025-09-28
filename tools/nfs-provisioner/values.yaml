@@ -1,0 +1,56 @@
+nfs:
+  server: 192.168.0.173
+  path: /volume1/k8s-shared
+  mountOptions:
+  volumeName: nfs-subdir-external-provisioner-root
+  # Reclaim policy for the main nfs volume
+  reclaimPolicy: Retain
+
+# For creating the StorageClass automatically:
+storageClass:
+  create: true
+  defaultClass: true
+
+  # Set a StorageClass name
+  name: nfs-client
+
+  # Allow volume to be expanded dynamically
+  allowVolumeExpansion: true
+
+  # Method used to reclaim an obsoleted volume
+  reclaimPolicy: Retain
+
+  # When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.
+  archiveOnDelete: false
+
+  # If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.
+  # Overrides archiveOnDelete.
+  # Ignored if value not set.
+  onDelete: retain
+
+  accessModes: ReadWriteOnce
+
+  # Set volume bindinng mode - Immediate or WaitForFirstConsumer
+  volumeBindingMode: Immediate
+
+
+resources:
+  limits:
+   cpu: 100m
+   memory: 128Mi
+  requests:
+   cpu: 100m
+   memory: 128Mi
+
+tolerations:
+  - key: "tools"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: "tools"
+              operator: "Exists"

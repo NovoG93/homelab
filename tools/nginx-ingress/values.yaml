@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=../../helmCharts/nginx-ingress/values.schema.json
+controller:
+  ingressClass:
+    name: "nginx"
+    setAsDefaultIngress: true
+  enableExternalDNS: true
+  healthStatus: true
+  healthStatusURI: '/nginx-health'
+  nginxStatus:
+    enabled: true
+    port: 8080
+    allowCidrs: "127.0.0.1"
+  enableCustomResources: true
+  enableSnippets: true
+  enableTLSPassthrough: true
+  prometheus:
+    create: true
+  wildcardTLS:
+    cert: ""
+    key: ""
+    secret: nginx-ingress/wildcard-tls
+  service:
+    type: LoadBalancer
+    loadBalancerIP: "192.168.0.210"
+  config:
+    entries:
+      client-max-body-size: "100000m"
+      use-forwarded-headers: "true"
+      use-proxy-protocol: "true"
+      use-regex: "true"
+      use-geoip: "true"
+      use-real-ip: "true"
+      use-ssl-passthrough: "true"
+      use-ssl-redirect: "true"
+      use-force-ssl-redirect: "true"
+      use-backend-protocol: "HTTPS"
+      use-rewrite-target: "true"
+      error-log-level: "debug"
+      log-format: '$remote_addr - $remote_user [$time_local] "$request" $status $grpc_status $body_bytes_sent "$http_referer"  "$http_user_agent" "$http_x_forwarded_for" "$resource_name" "$resource_type" "$resource_namespace" "$service"'
+
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "Exists"

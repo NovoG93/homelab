@@ -1,0 +1,1 @@
+https://freedium.cfd/https://mycloudjourney.medium.com/vault-installation-to-minikube-via-helm-with-integrated-storage-15c9d1a907e6
