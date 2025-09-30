@@ -52,7 +52,8 @@ server:
 
   extraEnvironmentVars:
     VAULT_SKIP_VERIFY: "true"
-    USERS: "Georg Elena"
+    USERS: "Georg"
+    USER_PASSWORD: "changeme"
     FORMAT: "" # -format=json
 
   postStart:

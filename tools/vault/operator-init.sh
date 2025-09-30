@@ -212,7 +212,7 @@ setUpUsers() {
     for user in $USERS; do
         user_lc=$(printf %s "$user" | tr '[:upper:]' '[:lower:]')
         ${PREFIX} env VAULT_TOKEN="${ROOT_TOKEN}" vault write "auth/userpass/users/${user_lc}" \
-            password=changeme \
+            password=${USER_PASSWORD} \
             policies=default,admins
     done
 }

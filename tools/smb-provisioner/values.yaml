@@ -1,0 +1,19 @@
+driver:
+  name: smb.csi.k8s.io
+
+controller:
+  name: csi-smb-controller
+  replicas: 1
+  dnsPolicy: ClusterFirstWithHostNet  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
+
+
+linux:
+  enabled: true
+  dsName: csi-smb-node # daemonset name
+  dnsPolicy: ClusterFirstWithHostNet  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
+
+
+windows:
+  enabled: false
+
+

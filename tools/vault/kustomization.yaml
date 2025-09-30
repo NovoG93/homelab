@@ -28,6 +28,26 @@ helmCharts:
   namespace: vault
   valuesFile: values.yaml
 
+patches:
+- target:
+    kind: Pod
+    name: vault-server-test
+  patch: |-
+    - op: add
+      path: /spec/tolerations
+      value:
+        - key: "tools"
+          operator: "Exists"
+          effect: "NoSchedule"
+    - op: add
+      path: /spec/affinity
+      value:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "tools"
+                    operator: "Exists"
 
 generatorOptions:
   disableNameSuffixHash: true
