@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/external-secrets/external-secrets/refs/tags/v0.19.2/deploy/charts/external-secrets/values.schema.json
+
+global:
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+  
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "Exists"
+
+namespaceOverride: external-secret-operator
+
+# -- Specifies the amount of historic ReplicaSets k8s should keep (see https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy)
+revisionHistoryLimit: 5
+
+
+# -- If set, install and upgrade CRDs through helm chart.
+installCRDs: true
+

@@ -6,7 +6,6 @@ metadata:
 helmGlobals:
   chartHome: ../../helmCharts/
 
-
 helmCharts:
 - includeCRDs: true
   name: csi-driver-smb
@@ -15,7 +14,3 @@ helmCharts:
   releaseName: csi-driver-smb
   namespace: smb-provisioner
   valuesFile: values.yaml
-
-
-generatorOptions:
-  disableNameSuffixHash: true

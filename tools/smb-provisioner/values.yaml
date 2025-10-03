@@ -15,5 +15,3 @@ linux:
 
 windows:
   enabled: false
-
-

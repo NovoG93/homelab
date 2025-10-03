@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: eso-vault
+---
+# Let the ESO controller (serviceaccount: external-secret-operator) create TokenRequests for the SA above
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: eso-tokenrequest
+rules:
+  - apiGroups: [""]
+    resources: ["serviceaccounts/token"]
+    verbs: ["create"]
+    resourceNames: ["eso-vault"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: eso-tokenrequest-binding
+subjects:
+  - kind: ServiceAccount
+    name: external-secret-operator   # ESO controller's SA (default from Helm chart)
+    namespace: external-secret-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: eso-tokenrequest

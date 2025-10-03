@@ -186,7 +186,7 @@ setupKubernetesAuth() {
         # Create/overwrite a role for ESO
         # IMPORTANT: service account name here must match the SA you reference from your SecretStore.
         local ESO_SA_NAME="${ESO_SA_NAME:-eso-vault}"
-        local ESO_NS="${ESO_NS:-external-secrets}"
+        local ESO_NS="${ESO_NS:-external-secret-operator}"
         ${PREFIX} env VAULT_TOKEN="${ROOT_TOKEN}" vault write auth/kubernetes/role/eso \
             bound_service_account_names="${ESO_SA_NAME}" \
             bound_service_account_namespaces="${ESO_NS}" \
