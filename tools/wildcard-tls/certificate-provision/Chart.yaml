@@ -1,0 +1,6 @@
+apiVersion: v2
+name: certificate-provision
+description: Simple helm chart that provisions a wildcard TLS certificate using cert-manager
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -1,0 +1,49 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name:  {{ include "certificate-provision.fullname" . }}
+spec:
+  duration: {{ .Values.certificate.duration }}
+  renewBefore: {{ .Values.certificate.renewBefore }}
+  {{- if .Values.certificate.dnsNames }}
+  {{- with .Values.certificate.dnsNames }}
+  dnsNames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{ else }}
+  dnsNames:
+    - '{{ .Values.certificate.commonName }}'
+  {{- end }}
+  commonName: '{{ .Values.certificate.commonName }}'
+  issuerRef:
+    kind: {{ .Values.certificate.issuerKind }}
+    name: {{ .Values.certificate.issuerName }}
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: {{ .Values.certificate.keySize }}
+  secretName: {{ .Values.certificate.secretName }}
+  subject:
+    countries:
+      - {{ .Values.certificate.country }}
+    localities:
+      - {{ .Values.certificate.city }}
+    organizations:
+      - {{ .Values.certificate.organization }}
+  {{- if or .Values.keystore.jks .Values.keystore.p12 }}
+  keystores:
+    {{- if .Values.keystore.jks }}
+    jks:
+      create: true
+      passwordSecretRef:
+        key: keystorepassword
+        name: {{ .Values.keystore.jkssecretname }}
+    {{- end }}
+    {{- if .Values.keystore.p12 }}
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        key: keystorepassword
+        name: {{ .Values.keystore.p12secretname }}
+    {{- end }}
+  {{- end }}

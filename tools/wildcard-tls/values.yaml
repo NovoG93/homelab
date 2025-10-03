@@ -1,0 +1,7 @@
+certificate:
+  commonName: "novotny.live"
+  dnsNames:
+  - "*.novotny.live"
+  - "novotny.live"
+  issuerKind: "ClusterIssuer"
+  secretName: wildcard-tls

@@ -1,0 +1,17 @@
+certificate:
+  commonName: "*.svc.cluster.local"
+  keySize: 4096
+  city: Vienna
+  organization: Novotny Home Lab
+  country: AT
+  secretName: cert
+  issuerKind: Issuer
+  issuerName: letsencrypt-dns-cloudflare
+  duration: 8760h0m0s
+  renewBefore: 720h0m0s
+
+keystore:
+  jks: false
+  p12: false
+  jkssecretname: jks-secret
+  p12secretname: p12-secret
