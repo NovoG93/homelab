@@ -7,7 +7,7 @@ helmGlobals:
   chartHome: ../../helmCharts/
 
 resources:
-- eso-vault.yaml
+- eso-vault-sa.yaml
 - cluster-secret-store/dev.yaml
 - cluster-secret-store/prod.yaml
 

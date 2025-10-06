@@ -1,4 +1,9 @@
 #!/bin/sh
+# This script automates the initialization, unsealing, and configuration of a HashiCorp Vault instance,
+# including secret engines, policies, Kubernetes authentication, user management, and key backup. 
+# It is designed to be idempotent, safe to run multiple times, and adapts to whether it's executed inside a pod or via kubectl.
+# Key environment variables control user creation and integration with External Secrets Operator, making it a complete Vault bootstrap for development use.
+
 set -o errexit
 set -o nounset
 set -o pipefail
