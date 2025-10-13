@@ -1,0 +1,12 @@
+global:
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+  
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: "tools"
+              operator: "Exists"

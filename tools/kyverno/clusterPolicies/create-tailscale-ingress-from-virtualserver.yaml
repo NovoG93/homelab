@@ -1,0 +1,66 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: create-tailscale-ingress-from-virtualserver
+spec:
+  validationFailureAction: Enforce
+  useServerSideApply: true # Ignore metadata changes
+  rules:
+  - name: create-tailscale-ingress-from-virtualserver
+    skipBackgroundRequests: false
+    match:
+      any:
+      - resources:
+          kinds:
+          - k8s.nginx.org/v1/VirtualServer
+    exclude:
+      any:
+      - resources:
+          kinds:
+          - k8s.nginx.org/v1/VirtualServer
+          selector:
+            matchLabels:
+              ignore-ts: "true"
+      - resources:
+          kinds: ["Namespace"]
+          names:
+          - "!wildcard-tls"
+          - "!calico-apiserver"
+          - "!calico-system"
+          - "!cert-manager"
+          - "!external-dns"
+          - "!kube-node-lease"
+          - "!kube-public"
+          - "!kube-system"
+          - "!kyverno"
+          - "!metallb-system"
+          - "!nfs-provisioner"
+          - "!tigera-operator"
+          - "!nginx-ingress"
+    generate:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      name: tailscale-{{request.object.metadata.name}}-ig
+      namespace: "{{request.object.metadata.namespace}}"
+      synchronize: true
+      generateExisting: true
+      data:
+        metadata:
+          annotations:
+            created-by: kyverno.io/create-tailscale-ingress-from-virtualserver
+          labels: "{{ request.object.metadata.labels || parse_json('{}') }}"
+        spec:
+          ingressClassName: tailscale
+          tls:
+            - hosts:
+                - "{{request.object.metadata.name}}-{{request.object.metadata.namespace}}"
+          rules:
+            - http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: "{{request.object.spec.upstreams[0].service}}"
+                        port:
+                          number: "{{request.object.spec.upstreams[0].port}}"

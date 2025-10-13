@@ -1,0 +1,4 @@
+name: kyverno
+path: tools/kyverno
+namespace: kyverno
+project: default
