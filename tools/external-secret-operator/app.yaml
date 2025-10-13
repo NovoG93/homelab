@@ -1,0 +1,4 @@
+name: external-secret-operator
+path: tools/external-secret-operator
+namespace: external-secret-operator
+project: default

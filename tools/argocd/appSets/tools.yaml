@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: tools-appset
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/novo-lab/aoa.git
+        revision: main
+        directories:
+          - path: tools/**/app.yaml
+  template:
+    metadata:
+      name: "{{ .name }}"
+      labels:
+        group: tools
+    spec:
+      project: "{{ .project }}"
+      source:
+        repoURL: https://github.com/novo-lab/aoa.git
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated: 
+          enabled: false
+        #   prune: true
+        #   selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true

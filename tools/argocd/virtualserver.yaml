@@ -1,0 +1,21 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "argocd.novotny.live"
+spec:
+  externalDNS:
+    enable: true
+  host: argocd.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: argocd-server
+    service: argocd-server
+    port: 80
+  routes:
+  - path: /
+    action:
+      pass: argocd-server

@@ -1,0 +1,4 @@
+name: nginx-ingress
+path: tools/nginx-ingress
+namespace: nginx-ingress
+project: default

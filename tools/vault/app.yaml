@@ -1,0 +1,4 @@
+name: vault
+path: tools/vault
+namespace: vault
+project: default

@@ -1,0 +1,22 @@
+global:
+  domain: argocd.novotny.live
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  affinity:
+    nodeAffinity:
+      type: hard
+      matchExpressions:
+      - key: "tools"
+        operator: "Exists"
+  
+
+configs:
+  params:
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: false

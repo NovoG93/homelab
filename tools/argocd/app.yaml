@@ -1,0 +1,4 @@
+name: argocd
+path: tools/argocd
+namespace: argocd
+project: default

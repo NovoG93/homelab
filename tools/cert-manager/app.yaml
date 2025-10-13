@@ -1,0 +1,4 @@
+name: cert-manager
+path: tools/cert-manager
+namespace: cert-manager
+project: default

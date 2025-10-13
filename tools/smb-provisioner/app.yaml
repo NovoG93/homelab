@@ -1,0 +1,4 @@
+name: smb-provisioner
+path: tools/smb-provisioner
+namespace: smb-provisioner
+project: default
