@@ -10,3 +10,8 @@ global:
         - matchExpressions:
             - key: "tools"
               operator: "Exists"
+
+policyReportsCleanup:
+  image:
+    repository: registry.k8s.io/kubectl
+    tags: v1.32.7
