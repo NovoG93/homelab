@@ -7,7 +7,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/novo-lab/aoa.git
+        repoURL: https://github.com/NovoG93/homelab
         revision: main
         directories:
           - path: tools/**/app.yaml
@@ -19,7 +19,7 @@ spec:
     spec:
       project: "{{ .project }}"
       source:
-        repoURL: https://github.com/novo-lab/aoa.git
+        repoURL: https://github.com/NovoG93/homelab
         targetRevision: main
         path: "{{ .path.path }}"
       destination:
