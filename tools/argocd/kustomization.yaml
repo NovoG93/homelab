@@ -5,7 +5,7 @@ metadata:
 namespace: argocd
 
 resources:
-# - virtualserver.yaml
+- virtualserver.yaml
 - appSets
 
 helmGlobals:
