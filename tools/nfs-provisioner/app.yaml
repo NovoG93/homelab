@@ -1,4 +1,4 @@
 name: nfs-provisioner
-path: tools/cert-manager
-namespace: cert-manager
+path: tools/nfs-provisioner
+namespace: nfs-provisioner
 project: default
