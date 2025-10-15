@@ -1,0 +1,114 @@
+# Disable DHCP server component (using external DHCP)
+serviceDhcp:
+  enabled: false
+
+# -- Configuration for the DNS service on port 53
+serviceDns:
+  # -- `spec.type` for the DNS Service
+  type: LoadBalancer
+
+  # -- A fixed `spec.loadBalancerIP` for the DNS Service
+  loadBalancerIP: "192.168.0.211"
+  
+  externalTrafficPolicy: Cluster 
+  
+  annotations:
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+    # metallb.universe.tf/address-pool: network-services
+
+
+
+# -- Configuration for the web interface service
+serviceWeb:
+  # -- Configuration for the HTTP web interface listener
+  http:
+    # -- Generate a service for HTTP traffic
+    enabled: true
+
+  # -- Configuration for the HTTPS web interface listener
+  https:
+    # -- Generate a service for HTTPS traffic
+    enabled: true
+
+  # -- `spec.type` for the web interface Service
+  type: ClusterIP
+
+
+ingress:
+  enabled: false
+
+virtualHost: pi.hole
+
+
+# -- We usually recommend not to specify default resources and to leave this as a conscious
+# -- choice for the user. This also increases chances charts run on environments with little
+# -- resources, such as Minikube. If you do want to specify resources, uncomment the following
+# -- lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+resources:
+  limits:
+  #  cpu: 100m
+   memory: 128Mi
+  requests:
+   cpu: 100m
+   memory: 128Mi
+
+# -- `spec.PersitentVolumeClaim` configuration
+persistentVolumeClaim:
+  # -- set to true to use pvc
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  # -- volume claim size
+  size: "500Mi"
+
+
+# -- Use an existing secret for the admin password.
+admin:
+  # -- If set to false admin password will be disabled, adminPassword specified above and the pre-existing secret (if specified) will be ignored.
+  enabled: true
+  # -- Specify an existing secret to use as admin password
+  existingSecret: "pihole-password"
+  # -- Specify the key inside the secret to use
+  passwordKey: "password"
+  # -- Specify [annotations](docs/Values.md#admin.annotations) to be added to the secret
+  annotations:
+    # reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    # reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "external-dns"
+
+# -- default upstream DNS 1 server to use
+DNS1: "8.8.8.8"
+# -- default upstream DNS 2 server to use
+DNS2: "8.8.4.4"
+
+
+# -- Additional annotations for the deployment
+deploymentAnnotations: 
+  reloader.stakater.com/auto: "true"
+
+podDnsConfig:
+  enabled: false
+  policy: "None"
+  nameservers:
+    - 127.0.0.1
+    - 8.8.8.8
+    - 192.168.0.1
+
+extraEnvVars:
+  FTLCONF_dns_listeningMode: "all"
+
+
+tolerations:
+  - key: "tools"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: "tools"
+              operator: "Exists"
+
+blacklist: 
+- "*.9gag.com"

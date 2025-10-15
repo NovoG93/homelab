@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: kustomization
+
+helmGlobals:
+  chartHome: ../../helmCharts/
+
+resources:
+- virtualserver.yaml
+- es-pihole-password.yaml
+
+helmCharts:
+- includeCRDs: true
+  name: pihole
+  repo: https://mojo2600.github.io/pihole-kubernetes/
+  version: 2.31.0
+  releaseName: pihole
+  namespace: pihole
+  valuesFile: values.yaml
+
+patches:
+- target:
+    kind: Pod
+    name: pihole-smoke-test
+  path: patch-pod-smoke-test.yaml
+  
+generatorOptions:
+  disableNameSuffixHash: true

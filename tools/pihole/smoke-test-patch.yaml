@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    helm.sh/hook: test
+  creationTimestamp: "2025-10-15T04:29:47Z"
+  generation: 1
+  name: pihole-smoke-test
+  namespace: pihole
+  resourceVersion: "2831565"
+  uid: c1af19ea-5ed0-4a48-9a1d-d7e1fa32a335
+spec:
+  containers:
+  - name: hook1-container
+  tolerations:
+  - key: "tools"
+    operator: "Exists"
+    effect: "NoSchedule"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "Exists"

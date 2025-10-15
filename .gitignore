@@ -2,3 +2,4 @@
 *env
 test*.yaml
 *.png
+.DS_Store
