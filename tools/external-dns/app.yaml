@@ -1,0 +1,4 @@
+name: external-dns
+path: tools/external-dns
+namespace: external-dns
+project: default

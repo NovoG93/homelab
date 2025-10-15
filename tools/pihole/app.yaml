@@ -1,0 +1,4 @@
+name: pihole
+path: tools/pihole
+namespace: pihole
+project: default
