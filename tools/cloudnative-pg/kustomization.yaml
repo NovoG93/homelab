@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: kustomization
+
+helmGlobals:
+  chartHome: ../../helmCharts/
+
+helmCharts:
+- includeCRDs: true
+  name: cloudnative-pg
+  repo: https://cloudnative-pg.github.io/charts
+  version: 0.24.0
+  releaseName: cloudnative-pg
+  namespace: cloudnative-pg
+  valuesFile: values.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true

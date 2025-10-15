@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/cloudnative-pg/charts/refs/tags/cloudnative-pg-v0.24.0/charts/cloudnative-pg/values.schema.json
+
+tolerations:
+  - key: tools
+    operator: Exists
+    effect: NoSchedule
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: tools
+              operator: Exists

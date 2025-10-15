@@ -1,0 +1,4 @@
+name: cloudnative-pg
+path: tools/cloudnative-pg
+namespace: cloudnative-pg
+project: default
