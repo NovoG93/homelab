@@ -27,9 +27,8 @@ spec:
         namespace: "{{ .namespace }}"
       syncPolicy:
         automated:
-          enabled: false
-        #   prune: true
-        #   selfHeal: true
+          prune: true
+          selfHeal: true
         syncOptions:
           - CreateNamespace=true
           - PrunePropagationPolicy=foreground
