@@ -5,7 +5,7 @@ metadata:
 namespace: argocd
 
 resources:
-# - apps.yaml
+- apps.yaml
 - tools.yaml
 - core.yaml
 
