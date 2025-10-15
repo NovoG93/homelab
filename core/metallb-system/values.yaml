@@ -1,5 +1,8 @@
 controller:
   logLevel: debug
+  tolerations:
+    - operator: "Exists" # any taint
 speaker:
   logLevel: debug
-
+  tolerations:
+    - operator: "Exists" # any taint
