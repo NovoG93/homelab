@@ -1,33 +1,33 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: apps-apps
+  name: apps-appset
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/novo-lab/aoa.git
+        repoURL: https://github.com/NovoG93/homelab
         revision: main
-        directories:
-          - path: apps/*
+        files:
+          - path: "apps/**/app.yaml"
   template:
     metadata:
-      name: "{{ base .path.basenameNormalized }}"
+      name: "{{ .name }}"
       labels:
         group: apps
     spec:
-      project: default
+      project: "{{ .project }}"
       source:
-        repoURL: https://github.com/novo-lab/aoa.git
+        repoURL: https://github.com/NovoG93/homelab
         targetRevision: main
         path: "{{ .path.path }}"
       destination:
         server: https://kubernetes.default.svc
-        namespace: "{{ base .path.basenameNormalized }}"
+        namespace: "{{ .namespace }}"
       syncPolicy:
-        automated: 
-          enabled: true
+        automated:
+          enabled: false
         #   prune: true
         #   selfHeal: true
         syncOptions:
