@@ -23,7 +23,7 @@ patches:
 - target:
     kind: Pod
     name: pihole-smoke-test
-  path: patch-pod-smoke-test.yaml
+  path: smoke-test-patch.yaml
   
 generatorOptions:
   disableNameSuffixHash: true
