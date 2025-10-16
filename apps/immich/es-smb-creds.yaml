@@ -1,0 +1,28 @@
+# external-secrets/es-dev-app.yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: smb-creds
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-dev
+    kind: ClusterSecretStore
+  target:
+    name: smb-creds
+    deletionPolicy: Delete
+  data:
+    - secretKey: username
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/smb-creds
+        property: username
+    - secretKey: password
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/smb-creds
+        property: password

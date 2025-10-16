@@ -1,0 +1,4 @@
+name: immich
+path: tools/immich
+namespace: immich
+project: default
