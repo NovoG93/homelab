@@ -12,7 +12,7 @@ resources:
 - immich-pvc.yaml
 - virtualserver.yaml
 - cloudnative-pg/pg-db.yaml
-- cloudnative-pg/immich.yaml
+- cloudnative-pg/immich-pvc.yaml
 - es-immich-postgres-user.yaml
 - es-smb-creds.yaml
 
