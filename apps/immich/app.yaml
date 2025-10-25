@@ -1,4 +1,4 @@
 name: immich
-path: tools/immich
+path: apps/immich
 namespace: immich
 project: default
