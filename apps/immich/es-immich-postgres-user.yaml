@@ -1,15 +1,14 @@
-# external-secrets/es-dev-app.yaml
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: immich-postgres-user
+  name: immich-postgres-credentials
 spec:
   refreshInterval: 1m
   secretStoreRef:
     name: vault-dev
     kind: ClusterSecretStore
   target:
-    name: immich-postgres-user
+    name: immich-postgres-credentials
     deletionPolicy: Delete
   data:
     - secretKey: DB_USERNAME
@@ -17,33 +16,66 @@ spec:
         conversionStrategy: Default	
         decodingStrategy: None
         metadataPolicy: None
-        key: apps/immich/immich-postgres-user
+        key: apps/immich/immich-postgres-credentials
         property: DB_USERNAME
     - secretKey: DB_DATABASE_NAME
       remoteRef:
         conversionStrategy: Default	
         decodingStrategy: None
         metadataPolicy: None
-        key: apps/immich/immich-postgres-user
+        key: apps/immich/immich-postgres-credentials
         property: DB_DATABASE_NAME
     - secretKey: DB_PASSWORD
       remoteRef:
         conversionStrategy: Default	
         decodingStrategy: None
         metadataPolicy: None
-        key: apps/immich/immich-postgres-user
+        key: apps/immich/immich-postgres-credentials
         property: DB_PASSWORD
     - secretKey: username
       remoteRef:
         conversionStrategy: Default	
         decodingStrategy: None
         metadataPolicy: None
-        key: apps/immich/immich-postgres-user
+        key: apps/immich/immich-postgres-credentials
         property: username
     - secretKey: password
       remoteRef:
         conversionStrategy: Default	
         decodingStrategy: None
         metadataPolicy: None
-        key: apps/immich/immich-postgres-user
+        key: apps/immich/immich-postgres-credentials
         property: password
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: immich-database-credentials
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-dev
+    kind: ClusterSecretStore
+  target:
+    name: immich-database-credentials
+    deletionPolicy: Delete
+    template:
+      type: kubernetes.io/basic-auth
+      data:
+        username: "{{ .username }}"
+        password: "{{ .password }}"
+  data:
+    - secretKey: username
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/immich-postgres-credentials
+        property: DB_USERNAME
+    - secretKey: password
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/immich-postgres-credentials
+        property: DB_PASSWORD

@@ -12,7 +12,6 @@ resources:
 - immich-pvc.yaml
 - virtualserver.yaml
 - cloudnative-pg/pg-db.yaml
-- cloudnative-pg/immich-pvc.yaml
 - es-immich-postgres-user.yaml
 - es-smb-creds.yaml
 
@@ -20,7 +19,7 @@ helmCharts:
 - includeCRDs: true
   name: immich
   repo: oci://ghcr.io/immich-app/immich-charts/
-  version: 0.10.0
+  version: 0.10.1
   releaseName: immich
   namespace: immich
   valuesFile: values.yaml

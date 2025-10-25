@@ -3,30 +3,39 @@ kind: Cluster
 metadata:
   name: immich-postgres
 spec:
-  # At the time of writing, immich is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-  imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba
   instances: 1
+
+  storage:
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: nfs-client
+      volumeMode: Filesystem
+
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3
+
 
   postgresql:
     shared_preload_libraries:
-      - "vectors.so"
-
-  managed:
-    roles:
-      - name: immich
-        superuser: true
-        login: true
+      - "vchord.so"
+  
+  
 
   bootstrap:
     initdb:
-      database: immich
+      database: immich-db
       owner: immich
       secret:
-        name: immich-postgres-user
-      postInitSQL:
-        - CREATE EXTENSION IF NOT EXISTS "vectors";
-        - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
-        - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
+        name: immich-database-credentials
+      postInitApplicationSQL:
+        # Commands based on: https://immich.app/docs/administration/postgres-standalone/#without-superuser-permission
+        - CREATE EXTENSION vchord CASCADE;
+        - CREATE EXTENSION earthdistance CASCADE;
+    
+
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -39,6 +48,3 @@ spec:
       - key: apps
         operator: Exists
         effect: NoSchedule
-
-  storage:
-    size: 4Gi
