@@ -5,7 +5,7 @@ metadata:
 
 resources:
 - copy-wildcard-secret.yaml
-# - create-tailscale-ingress-from-virtualserver.yaml
+- create-tailscale-ingress-from-virtualserver.yaml
 
   
 generatorOptions:
