@@ -6,8 +6,8 @@ metadata:
 helmGlobals:
   chartHome: ../../helmCharts/
 
-# resources:
-# - es-operator-oauth.yaml
+resources:
+- es-operator-oauth.yaml
 
 
 helmCharts:
