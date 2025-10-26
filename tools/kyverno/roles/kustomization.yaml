@@ -5,6 +5,7 @@ metadata:
 
 resources:
 - secrets.yaml
+- virtualservers.yaml
 
   
 generatorOptions:
