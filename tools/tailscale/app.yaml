@@ -1,0 +1,4 @@
+name: tailscale
+path: tools/tailscale
+namespace: tailscale
+project: default

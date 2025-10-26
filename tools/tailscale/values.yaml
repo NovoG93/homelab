@@ -1,0 +1,18 @@
+installCRDs: true
+
+operatorConfig:
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "Exists"
+
+ingressClass:
+  enabled: true
