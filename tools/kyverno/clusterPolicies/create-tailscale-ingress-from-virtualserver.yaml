@@ -48,6 +48,7 @@ spec:
         metadata:
           annotations:
             created-by: kyverno.io/create-tailscale-ingress-from-virtualserver
+            tailscale.com/proxy-class: "tool-node-config"
           labels: "{{ request.object.metadata.labels || parse_json('{}') }}"
         spec:
           ingressClassName: tailscale

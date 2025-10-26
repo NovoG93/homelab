@@ -8,6 +8,7 @@ helmGlobals:
 
 resources:
 - es-operator-oauth.yaml
+- proxy-class-config.yaml
 
 
 helmCharts:

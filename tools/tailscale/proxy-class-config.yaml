@@ -1,0 +1,18 @@
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: tool-node-config
+spec:
+  statefulSet:
+    pod:
+      tolerations:
+        - key: "tools"
+          operator: "Exists"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "tools"
+                    operator: "Exists"
