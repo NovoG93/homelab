@@ -112,3 +112,33 @@ affinity:
 
 blacklist: 
 - "*.9gag.com"
+
+
+extraContainers:
+- name: ts-sidecar
+  imagePullPolicy: Always
+  image: "ghcr.io/tailscale/tailscale:latest"
+  env:
+    # Store the state in a k8s secret
+  # - name: TS_KUBE_SECRET
+  #   value: "{{TS_KUBE_SECRET}}"
+  - name: TS_USERSPACE
+    value: "false"
+  - name: TS_DEBUG_FIREWALL_MODE
+    value: auto
+  - name: TS_AUTHKEY
+    valueFrom:
+      secretKeyRef:
+        name: tailscale-auth-key
+        key: auth-key
+        optional: true
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: POD_UID
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.uid
+  securityContext:
+    privileged: true

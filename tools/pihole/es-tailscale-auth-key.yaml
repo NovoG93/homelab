@@ -1,20 +1,20 @@
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: pihole-password
+  name: tailscale-auth-key
 spec:
   refreshInterval: 1m
   secretStoreRef:
     name: vault-dev
     kind: ClusterSecretStore
   target:
-    name: pihole-password
+    name: tailscale-auth-key
     deletionPolicy: Delete
   data:
-    - secretKey: password
+    - secretKey: auth-key
       remoteRef:
         conversionStrategy: Default	
         decodingStrategy: None
         metadataPolicy: None
-        key: tools/pihole/pihole-password
-        property: password
+        key: tools/pihole/tailscale-auth-key
+        property: auth-key

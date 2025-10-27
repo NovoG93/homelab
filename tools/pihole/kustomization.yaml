@@ -9,6 +9,7 @@ helmGlobals:
 resources:
 - virtualserver.yaml
 - es-pihole-password.yaml
+- es-tailscale-auth-key.yaml
 
 helmCharts:
 - includeCRDs: true
