@@ -119,13 +119,12 @@ extraContainers:
   imagePullPolicy: Always
   image: "ghcr.io/tailscale/tailscale:latest"
   env:
-    # Store the state in a k8s secret
-  # - name: TS_KUBE_SECRET
-  #   value: "{{TS_KUBE_SECRET}}"
   - name: TS_USERSPACE
     value: "false"
   - name: TS_DEBUG_FIREWALL_MODE
     value: auto
+  - name: TS_KUBE_SECRET
+    value: "tailscale-state"
   - name: TS_AUTHKEY
     valueFrom:
       secretKeyRef:
