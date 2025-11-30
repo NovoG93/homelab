@@ -1,0 +1,4 @@
+name: couchdb
+path: apps/couchdb
+namespace: couchdb
+project: default

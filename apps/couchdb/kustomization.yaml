@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: kustomization
+
+helmGlobals:
+  chartHome: ../../helmCharts/
+resources:
+- virtualserver.yaml
+- es-obsidian-couchdb.yaml
+
+helmCharts:
+- includeCRDs: true
+  name: couchdb
+  repo: https://apache.github.io/couchdb-helm
+  version: 4.6.1
+  releaseName: obsidian
+  namespace: obsidian
+  valuesFile: values.yaml
+
+patches:
+- target:
+    kind: Job
+    name: obsidian-post-install
+  patch: |-
+    - op: "replace"
+      path: "/metadata/annotations"
+      value:
+        argocd.argoproj.io/hook: Sync
+
+
+generatorOptions:
+  disableNameSuffixHash: true

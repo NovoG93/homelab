@@ -1,0 +1,42 @@
+# external-secrets/es-dev-app.yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: obsidian-couchdb
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-dev
+    kind: ClusterSecretStore
+  target:
+    name: obsidian-couchdb
+    deletionPolicy: Delete
+  data:
+    - secretKey: adminUsername
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/obsidian/obsidian-couchdb
+        property: adminUsername
+    - secretKey: adminPassword
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/obsidian/obsidian-couchdb
+        property: adminPassword
+    - secretKey: cookieAuthSecret
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/obsidian/obsidian-couchdb
+        property: cookieAuthSecret
+    - secretKey: erlangCookie
+      remoteRef:
+        conversionStrategy: Default	
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/obsidian/obsidian-couchdb
+        property: erlangCookie

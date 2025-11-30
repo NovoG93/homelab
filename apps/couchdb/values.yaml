@@ -1,0 +1,99 @@
+# -- the initial number of nodes in the CouchDB cluster.
+clusterSize: 1
+
+annotations:
+  argocd.argoproj.io/hook: PreSync
+
+allowAdminParty: false
+
+autoSetup:
+  enabled: true
+  image:
+    repository: curlimages/curl
+    tag: latest
+    pullPolicy: Always
+  defaultDatabases:
+    - _users
+    - _replicator
+    - _global_changes
+    - georg_vault
+
+
+createAdminSecret: false
+adminUsernameKey: "adminUsername"
+adminPasswordKey: "adminPassword"
+
+adminUsername: admin
+networkPolicy:
+  enabled: true
+
+
+persistentVolume:
+  enabled: true
+  annotations: {}
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+persistentVolumeClaimRetentionPolicy:
+  enabled: true
+  whenScaled: Retain
+  whenDeleted: Retain
+
+## The CouchDB image
+image:
+  repository: couchdb
+  tag: 3.5.0
+  pullPolicy: IfNotPresent
+
+
+initImage:
+  repository: busybox
+  tag: latest
+  pullPolicy: Always
+
+tolerations:
+  - key: apps
+    operator: Exists
+    effect: NoSchedule
+
+service:
+  annotations: {}
+  enabled: true
+  type: ClusterIP
+  externalPort: 5984
+  targetPort: 5984
+
+
+
+
+resources: {}
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # limits:
+  #  cpu: 56
+  #  memory: 256Gi
+
+
+
+erlangFlags:
+  name: couchdb
+
+
+couchdbConfig:
+  couchdb:
+   max_document_size: 104857600
+  chttpd_auth:
+    require_valid_user: true
+  chttpd:
+    bind_address: any
+    require_valid_user: true
+    max_http_request_size: 204857600
+    enable_cors: true
+  httpd:
+    WWW-Authenticate: '"Basic realm="couchdb""'
+    enable_cors: true
+  cors:
+    credentials: true
+    origins: "app://obsidian.md,capacitor://localhost,http://localhost"
