@@ -23,7 +23,6 @@ createAdminSecret: false
 adminUsernameKey: "adminUsername"
 adminPasswordKey: "adminPassword"
 
-adminUsername: admin
 networkPolicy:
   enabled: true
 
