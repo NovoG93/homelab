@@ -27,6 +27,21 @@ patches:
       path: "/metadata/annotations"
       value:
         argocd.argoproj.io/hook: Sync
+    - op: "add"
+      path: "/spec/template/spec/tolerations"
+      value:
+        - key: apps
+          operator: Exists
+          effect: NoSchedule
+    - op: "add"
+      path: "/spec/template/spec/affinity"
+      value:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: apps
+                    operator: Exists
 
 
 generatorOptions:

@@ -80,6 +80,13 @@ resources: {}
 erlangFlags:
   name: couchdb
 
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: apps
+              operator: Exists
 
 couchdbConfig:
   couchdb:
