@@ -83,6 +83,7 @@ erlangFlags:
 
 couchdbConfig:
   couchdb:
+   uuid: decafbaddecafbaddecafbaddecafbad # Unique identifier for this CouchDB server instance
    max_document_size: 104857600
   chttpd_auth:
     require_valid_user: true
