@@ -1,4 +1,4 @@
 name: netshoot
-path: tools/netshoot
+path: apps/netshoot
 namespace: default
 project: default
