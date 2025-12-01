@@ -141,3 +141,8 @@ extraContainers:
         fieldPath: metadata.uid
   securityContext:
     privileged: true
+
+dnsmasq:
+  enableCustomDnsMasq: true
+  customDnsEntries: 
+    - address=/homeassistant.local/192.168.0.82
