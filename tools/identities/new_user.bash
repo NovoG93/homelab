@@ -121,3 +121,8 @@ users:
     client-certificate-data: $(cat "${CRED_DIR}/${NEW_USER}.crt" | base64 | tr -d "\n")
     client-key-data: $(cat "${CRED_DIR}/${NEW_USER}.key" | base64 | tr -d "\n")
 YAML
+# 4. Upload to Vault
+echo "------------------------------------------------"
+echo "Uploading credentials to Vault..."
+./upload_to_vault.bash "${NEW_USER}"
+echo "------------------------------------------------"
