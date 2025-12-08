@@ -81,7 +81,7 @@ kubectl certificate approve "${CSR_NAME}"
 # Retrieve Signed Certificate
 echo "Waiting for certificate to be issued..."
 # Loop a few times to wait for the certificate
-for i in {1..10}; do
+for _ in {1..10}; do
     CERT=$(kubectl get csr "${CSR_NAME}" -o jsonpath='{.status.certificate}')
     if [ -n "$CERT" ]; then
         break
@@ -95,9 +95,6 @@ if [ -z "$CERT" ]; then
 fi
 
 echo "$CERT" | base64 -d > "${CRED_DIR}/${NEW_USER}.crt"
-
-# Clean up CSR resource
-kubectl delete csr "${CSR_NAME}"
 
 # Create Kubeconfig
 KUBE_CONFIG="${CRED_DIR}/${NEW_USER}.kubeconfig"
@@ -124,15 +121,3 @@ users:
     client-certificate-data: $(cat "${CRED_DIR}/${NEW_USER}.crt" | base64 | tr -d "\n")
     client-key-data: $(cat "${CRED_DIR}/${NEW_USER}.key" | base64 | tr -d "\n")
 YAML
-
-echo "------------------------------------------------"
-echo "User setup complete!"
-echo "1. Kubeconfig generated: ${KUBE_CONFIG}"
-echo "2. RBAC manifests updated in 'tools/identities/bindings/'"
-echo "3. USERS.txt updated."
-echo ""
-echo "IMPORTANT: You must commit and push the changes in 'tools/identities' to git for ArgoCD to apply the permissions."
-echo "  git add tools/identities"
-echo "  git commit -m \"Add user ${NEW_USER}\""
-echo "  git push"
-echo "------------------------------------------------"
