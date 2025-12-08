@@ -4,5 +4,6 @@ resources:
 - clusterroles/admin.yaml
 - clusterroles/reader.yaml
 - roles/harbor.yaml
-- bindings/georg-cluster-admin-binding.yaml
-- bindings/elena-reader-harbor-binding.yaml
+- bindings/georg-homelab-admin-binding.yaml
+- bindings/elena-homelab-reader-binding.yaml
+- bindings/elena-homelab-harbor-harbor-binding.yaml

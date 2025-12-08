@@ -5,50 +5,33 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <username> <role> [namespace] [kind]"
-    echo "Example: $0 georg admin"
-    echo "Example: $0 elena reader harbor"
-    echo "Example: $0 elena my-role harbor Role"
+    echo "Usage: $0 <username> <clusterrole> [role]"
+    echo "Example: $0 georg homelab:admin"
+    echo "Example: $0 elena homelab:reader homelab:harbor"
     exit 1
 fi
 
 NEW_USER="$1"
-ROLE="$2"
-NAMESPACE="${3:-}"
-KIND="${4:-}"
+CLUSTER_ROLE="$2"
+ROLE="${3:-}"
 
-# Define the group for the CSR
+# Define the group for the CSR (optional, but good practice)
 GROUP="homelab-users"
 
 echo "------------------------------------------------"
 echo "Initiating setup for user: ${NEW_USER}"
-echo "Role: ${ROLE}"
-if [ -n "$NAMESPACE" ]; then
-    echo "Scope: Namespace '${NAMESPACE}'"
-else
-    echo "Scope: Cluster-wide"
-fi
-if [ -n "$KIND" ]; then
-    echo "Kind: ${KIND}"
-else
-    echo "Kind: ClusterRole (default)"
+echo "ClusterRole: ${CLUSTER_ROLE}"
+if [ -n "$ROLE" ]; then
+    echo "Role: ${ROLE}"
 fi
 echo "------------------------------------------------"
 
-# Update USERS.txt
+# 1. Update USERS.txt
 USERS_FILE="users/USERS.txt"
 mkdir -p users
 
 # Construct the entry line
-if [ -z "$NAMESPACE" ]; then
-    ENTRY="${NEW_USER}:${ROLE}"
-else
-    if [ -n "$KIND" ]; then
-        ENTRY="${NEW_USER}:${ROLE}:${NAMESPACE}:${KIND}"
-    else
-        ENTRY="${NEW_USER}:${ROLE}:${NAMESPACE}"
-    fi
-fi
+ENTRY="${NEW_USER};${CLUSTER_ROLE};${ROLE}"
 
 # Check if exact entry exists to avoid duplicates
 if grep -Fxq "$ENTRY" "$USERS_FILE"; then
@@ -58,11 +41,11 @@ else
     echo "$ENTRY" >> "$USERS_FILE"
 fi
 
-# Regenerate RBAC manifests
+# 2. Regenerate RBAC manifests
 echo "Regenerating RBAC manifests..."
 ./generate_rbac.bash
 
-# Generate Certificates and Kubeconfig
+# 3. Generate Certificates and Kubeconfig
 # Create a directory for the user's credentials to keep things clean
 CRED_DIR="creds/${NEW_USER}"
 mkdir -p "$CRED_DIR"
@@ -98,7 +81,7 @@ kubectl certificate approve "${CSR_NAME}"
 # Retrieve Signed Certificate
 echo "Waiting for certificate to be issued..."
 # Loop a few times to wait for the certificate
-for _ in {1..10}; do
+for i in {1..10}; do
     CERT=$(kubectl get csr "${CSR_NAME}" -o jsonpath='{.status.certificate}')
     if [ -n "$CERT" ]; then
         break
@@ -113,17 +96,13 @@ fi
 
 echo "$CERT" | base64 -d > "${CRED_DIR}/${NEW_USER}.crt"
 
+# Clean up CSR resource
+kubectl delete csr "${CSR_NAME}"
 
 # Create Kubeconfig
 KUBE_CONFIG="${CRED_DIR}/${NEW_USER}.kubeconfig"
 CLUSTER_SERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-CLUSTER_CA=$(kubectl config view --minify --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
-
-# Determine context namespace line
-NS_LINE=""
-if [ -n "$NAMESPACE" ]; then
-    NS_LINE="    namespace: ${NAMESPACE}"
-fi
+CLUSTER_CA=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
 
 cat << YAML > "${KUBE_CONFIG}"
 apiVersion: v1
@@ -137,7 +116,6 @@ contexts:
 - context:
     cluster: homelab-cluster
     user: ${NEW_USER}
-${NS_LINE}
   name: ${NEW_USER}-context
 current-context: ${NEW_USER}-context
 users:
@@ -146,3 +124,15 @@ users:
     client-certificate-data: $(cat "${CRED_DIR}/${NEW_USER}.crt" | base64 | tr -d "\n")
     client-key-data: $(cat "${CRED_DIR}/${NEW_USER}.key" | base64 | tr -d "\n")
 YAML
+
+echo "------------------------------------------------"
+echo "User setup complete!"
+echo "1. Kubeconfig generated: ${KUBE_CONFIG}"
+echo "2. RBAC manifests updated in 'tools/identities/bindings/'"
+echo "3. USERS.txt updated."
+echo ""
+echo "IMPORTANT: You must commit and push the changes in 'tools/identities' to git for ArgoCD to apply the permissions."
+echo "  git add tools/identities"
+echo "  git commit -m \"Add user ${NEW_USER}\""
+echo "  git push"
+echo "------------------------------------------------"

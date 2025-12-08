@@ -1,12 +1,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: georg-cluster-admin-binding
+  name: elena-homelab-harbor-binding
+  namespace: harbor
 subjects:
 - kind: User
-  name: georg
+  name: elena
   apiGroup: rbac.authorization.k8s.io
 roleRef:
-  kind: ClusterRole
-  name: cluster-admin
+  kind: Role
+  name: homelab:harbor
   apiGroup: rbac.authorization.k8s.io
