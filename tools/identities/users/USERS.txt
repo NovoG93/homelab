@@ -1,0 +1,3 @@
+#username:clusterrole:role
+georg:admin
+elena:reader:harbor

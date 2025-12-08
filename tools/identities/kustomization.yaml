@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- clusterroles/admin.yaml
+- clusterroles/reader.yaml
+- roles/harbor.yaml
+- bindings/georg-admin-binding.yaml
+- bindings/elena-reader-harbor-binding.yaml

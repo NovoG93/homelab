@@ -1,0 +1,4 @@
+name: identities
+path: tools/identities
+namespace: kube-system
+project: default
