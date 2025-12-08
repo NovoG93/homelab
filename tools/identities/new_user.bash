@@ -99,7 +99,7 @@ echo "$CERT" | base64 -d > "${CRED_DIR}/${NEW_USER}.crt"
 # Create Kubeconfig
 KUBE_CONFIG="${CRED_DIR}/${NEW_USER}.kubeconfig"
 CLUSTER_SERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-CLUSTER_CA=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+CLUSTER_CA=$(kubectl config view --minify --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
 
 cat << YAML > "${KUBE_CONFIG}"
 apiVersion: v1
