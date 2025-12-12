@@ -1,0 +1,4 @@
+name: cert-manager
+path: kind/tools/cert-manager
+namespace: cert-manager
+project: default

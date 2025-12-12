@@ -3,3 +3,8 @@
 test*.yaml
 *.png
 .DS_Store
+*.kubeconfig
+*.key
+*.crt
+*.csr
+helmCharts*

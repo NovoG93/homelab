@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../../helmCharts/cert-manager-v1.17.2/cert-manager/values.schema.json
+
+crds:
+  enabled: true
+global:
+  leaderElection:
+    namespace: cert-manager
+tolerations:
+  - key: "tools"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: "tools"
+              operator: "Exists"
+
+webhook:
+  affinity: 
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "Exists"
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+cainjector:
+  affinity: 
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "Exists"
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+startupapicheck:
+  affinity: 
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "Exists"
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"

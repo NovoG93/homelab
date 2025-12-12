@@ -1,0 +1,4 @@
+name: netshoot
+path: kind/apps/netshoot
+namespace: default
+project: default

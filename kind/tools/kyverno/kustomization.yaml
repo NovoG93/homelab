@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: kustomization
+namespace: kyverno
+
+resources:
+- ../../../tools/kyverno
+- namespace.yaml
+
+
+patches:
+- path: patch-delete-hooks.yaml

@@ -1,0 +1,4 @@
+name: calico
+path: kind/core/calico
+namespace: tigera-operator
+project: default

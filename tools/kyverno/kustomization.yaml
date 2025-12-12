@@ -19,6 +19,7 @@ helmCharts:
   namespace: kyverno
   valuesFile: values.yaml
 
-  
+
+
 generatorOptions:
   disableNameSuffixHash: true

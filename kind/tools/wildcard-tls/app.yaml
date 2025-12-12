@@ -1,0 +1,4 @@
+name: wildcard-tls
+path: kind/tools/wildcard-tls
+namespace: wildcard-tls
+project: default

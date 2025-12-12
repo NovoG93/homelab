@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: kustomization
+
+
+resources:
+- ../../../tools/cert-manager
+- namespace.yaml
+- selfsigned-issuer.yaml
+- kind-ca-secret.yaml
+
+helmGlobals:
+  chartHome: ../../../helmCharts/
+
+
+patches:
+- patch: |-
+    apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: letsencrypt-dns-cloudflare
+    $patch: delete
+- patch: |-
+    apiVersion: external-secrets.io/v1
+    kind: ExternalSecret
+    metadata:
+      name: api-token
+    $patch: delete

@@ -1,0 +1,24 @@
+name: Kustomize Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Kustomize
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Run Kustomize Action
+        uses: NovoG93/kusotmize-action@main
+        id: kustomize
+        with:
+          working-directory: "."
+          changed-only: "false"
+          fail-on-error: "true"
+          output-dir: "manifests"

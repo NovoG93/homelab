@@ -1,0 +1,12 @@
+# Kind-specific certificate values
+# Uses self-signed CA issuer for local development
+certificate:
+  commonName: "127.0.0.1.nip.io"
+  dnsNames:
+  - "*.127.0.0.1.nip.io"
+  - "127.0.0.1.nip.io"
+  - "*.localhost"
+  - "localhost"
+  issuerKind: "ClusterIssuer"
+  issuerName: "kind-ca-issuer"
+  secretName: wildcard-tls

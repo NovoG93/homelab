@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kyverno-scale-to-zero
+  namespace: kyverno
+$patch: delete
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-admission-controller-metrics
+  namespace: kyverno
+$patch: delete
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-cleanup-controller-liveness
+  namespace: kyverno
+$patch: delete
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-cleanup-controller-metrics
+  namespace: kyverno
+$patch: delete
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-cleanup-controller-readiness
+  namespace: kyverno
+$patch: delete
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-reports-controller-metrics
+  namespace: kyverno
+$patch: delete

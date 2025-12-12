@@ -1,0 +1,35 @@
+# Self-signed CA for local development
+# This creates a CA that can issue certificates for any domain
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+# CA Certificate - used to sign other certificates
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kind-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: kind-ca
+  secretName: kind-ca-secret
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+# ClusterIssuer that uses the CA to issue certificates
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: kind-ca-issuer
+spec:
+  ca:
+    secretName: kind-ca-secret
