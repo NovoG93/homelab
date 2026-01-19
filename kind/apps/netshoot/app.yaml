@@ -1,0 +1,4 @@
+name: nginx
+path: kind/apps/nginx
+namespace: default
+project: default

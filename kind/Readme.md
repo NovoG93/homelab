@@ -16,7 +16,7 @@ kind/
 │   ├── cert-manager/     # Self-signed CA issuer
 │   ├── local-storage/    # Local-path-provisioner (replaces NFS/SMB)
 │   ├── nginx-ingress/    # Ingress controller
-│   └── wildcard-tls/     # Wildcard cert for *.novotny.local
+│   └── wildcard-tls/     # Wildcard cert for *.127.0.0.1.nip.io
 └── apps/                  # Application overlays
     └── netshoot/         # Network debugging tool
 ```
@@ -28,7 +28,7 @@ kind/
 | **IPs** | 192.168.0.210-221 | 172.18.0.200-210 (Docker) |
 | **Certificates** | Let's Encrypt via Cloudflare | Self-signed CA |
 | **Storage** | NFS/SMB | local-path-provisioner |
-| **Domain** | *.novotny.live | *.novotny.local |
+| **Domain** | *.novotny.live | *.127.0.0.1.nip.io |
 | **VPN** | Tailscale | Disabled |
 | **External DNS** | Cloudflare | Disabled |
 
@@ -86,13 +86,12 @@ kubectl port-forward svc/argocd-server -n argocd 8080:80
 # Login: admin / <password from above>
 ```
 
-### 5. Local DNS (Optional)
+### 5. Local DNS
 
-Add to `/etc/hosts`:
-```
-127.0.0.1 argocd.novotny.local
-127.0.0.1 novotny.local
-```
+Using `nip.io` avoids the need for `/etc/hosts` entries.
+Access services via:
+- `https://argocd.127.0.0.1.nip.io`
+- `https://nginx.127.0.0.1.nip.io`
 
 ## Adding More Apps
 
