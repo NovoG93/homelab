@@ -38,13 +38,14 @@ spec:
         - name: tls-certs
           mountPath: /var/run/secrets/tls
           readOnly: true
-    volumes:
-    - name: tls-certs
-      projected:
-        sources:
-        - podCertificate:
-            signerName: kubernetes.io/kubelet-serving # issuers.cert-manager.io/letsencrypt-dns-cloudflare
-            path: tls.crt
+  volumes:
+  - name: tls-certs
+    projected:
+      sources:
+      - podCertificate:
+          signerName: kubernetes.io/kubelet-serving # issuers.cert-manager.io/letsencrypt-dns-cloudflare
+          keyType: rsa
+          path: tls.crt
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 ---
@@ -88,13 +89,14 @@ spec:
         - name: tls-certs
           mountPath: /var/run/secrets/tls
           readOnly: true
-    volumes:
-    - name: tls-certs
-      projected:
-        sources:
-        - podCertificate:
-            signerName: kubernetes.io/kubelet-serving # issuers.cert-manager.io/letsencrypt-dns-cloudflare
-            path: tls.crt
+  volumes:
+  - name: tls-certs
+    projected:
+      sources:
+      - podCertificate:
+          signerName: kubernetes.io/kubelet-serving # issuers.cert-manager.io/letsencrypt-dns-cloudflare
+          keyType: rsa
+          path: tls.crt
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 status: {}
