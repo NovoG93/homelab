@@ -22,6 +22,11 @@ spec:
     - inf
     image: nicolaka/netshoot
     name: netshoot
+    resizePolicy:
+    - resourceName: cpu
+      restartPolicy: NotRequired
+    - resourceName: memory
+      restartPolicy: NotRequired
     resources: 
       requests:
         cpu: 100m
