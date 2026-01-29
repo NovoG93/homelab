@@ -43,7 +43,7 @@ spec:
     projected:
       sources:
       - podCertificate:
-          signerName: kubernetes.io/kubelet-serving
+          signerName: kubernetes.io/internal-ca
           keyType: RSA3072
           credentialBundlePath: tls.crt
   dnsPolicy: ClusterFirst
