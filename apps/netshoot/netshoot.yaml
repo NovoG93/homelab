@@ -1,6 +1,8 @@
 apiVersion: v1
 kind: Pod
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Validate=false
   labels:
     run: netshoot
   name: netshoot

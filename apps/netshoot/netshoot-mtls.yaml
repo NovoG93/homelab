@@ -1,6 +1,8 @@
 apiVersion: v1
 kind: Pod
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Validate=false
   labels:
     run: netshoot-client
   name: netshoot-client
@@ -52,6 +54,8 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Validate=false
   labels:
     run: netshoot-server
   name: netshoot-server
