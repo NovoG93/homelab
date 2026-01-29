@@ -45,7 +45,7 @@ spec:
     projected:
       sources:
       - podCertificate:
-          signerName: kubernetes.io/internal-ca
+          signerName: clusterissuers.cert-manager.io/internal-ca
           keyType: RSA3072
           credentialBundlePath: tls.crt
   dnsPolicy: ClusterFirst
@@ -98,7 +98,7 @@ spec:
     projected:
       sources:
       - podCertificate:
-          signerName: kubernetes.io/internal-ca
+          signerName: clusterissuers.cert-manager.io/internal-ca
           keyType: RSA3072
           credentialBundlePath: tls.crt
   dnsPolicy: ClusterFirst
