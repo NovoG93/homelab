@@ -43,9 +43,9 @@ spec:
     projected:
       sources:
       - podCertificate:
-          signerName: kubernetes.io/kubelet-serving # issuers.cert-manager.io/letsencrypt-dns-cloudflare
-          keyType: rsa
-          path: tls.crt
+          signerName: kubernetes.io/kubelet-serving
+          keyType: RSA3072
+          credentialBundlePath: tls.crt
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 ---
@@ -94,9 +94,9 @@ spec:
     projected:
       sources:
       - podCertificate:
-          signerName: kubernetes.io/kubelet-serving # issuers.cert-manager.io/letsencrypt-dns-cloudflare
-          keyType: rsa
-          path: tls.crt
+          signerName: kubernetes.io/kubelet-serving
+          keyType: RSA3072
+          credentialBundlePath: tls.crt
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 status: {}
