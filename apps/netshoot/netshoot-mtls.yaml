@@ -45,7 +45,7 @@ spec:
     projected:
       sources:
       - podCertificate:
-          signerName: clusterissuers.cert-manager.io/internal-ca
+          signerName: novog93.ghcr/signer
           keyType: RSA3072
           credentialBundlePath: tls.crt
   dnsPolicy: ClusterFirst
@@ -98,7 +98,7 @@ spec:
     projected:
       sources:
       - podCertificate:
-          signerName: clusterissuers.cert-manager.io/internal-ca
+          signerName: novog93.ghcr/signer
           keyType: RSA3072
           credentialBundlePath: tls.crt
   dnsPolicy: ClusterFirst
