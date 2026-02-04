@@ -8,8 +8,18 @@
   },
   "packageRules": [
     {
-      "matchDatasources": ["helm"],
+      "description": "Group all helm chart updates into one PR to reduce noise",
+      "matchDatasources": [
+        "helm"
+      ],
       "groupName": "helm-charts"
+    },
+    {
+      "description": "Ignore the local certificate-provision chart which has no remote repo",
+      "matchPackageNames": [
+        "certificate-provision"
+      ],
+      "enabled": false
     }
   ]
 }
