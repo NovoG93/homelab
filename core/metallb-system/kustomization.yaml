@@ -6,7 +6,7 @@ namespace: metallb-system
 
 
 helmGlobals:
-  chartHome: ../../helmCharts/
+  chartHome: ../../helmCharts-core/
 
 resources:
 - namespace.yaml

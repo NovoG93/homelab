@@ -4,7 +4,7 @@ metadata:
   name: kustomization
 
 helmGlobals:
-  chartHome: ../../helmCharts/
+  chartHome: ../../helmCharts-tools/
 
 helmCharts:
 - includeCRDs: true

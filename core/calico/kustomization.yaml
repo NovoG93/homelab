@@ -8,7 +8,7 @@ resources:
 - namespace.yaml
 
 helmGlobals:
-  chartHome: ../../helmCharts/
+  chartHome: ../../helmCharts-core/
 
 helmCharts:
 - includeCRDs: true

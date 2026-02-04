@@ -5,7 +5,7 @@ metadata:
 
 
 helmGlobals:
-  chartHome: ../../helmCharts/
+  chartHome: ../../helmCharts-core/
 
 helmCharts:
 - includeCRDs: true

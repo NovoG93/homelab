@@ -11,7 +11,7 @@ resources:
 - kind-ca-secret.yaml
 
 helmGlobals:
-  chartHome: ../../../helmCharts/
+  chartHome: ../../../helmCharts-kind-tools/
 
 
 patches:

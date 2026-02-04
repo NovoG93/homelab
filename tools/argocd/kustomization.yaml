@@ -9,7 +9,7 @@ resources:
 - appSets
 
 helmGlobals:
-  chartHome: ../../helmCharts/
+  chartHome: ../../helmCharts-tools/
 
 helmCharts:
 - includeCRDs: true
