@@ -1,0 +1,4 @@
+name: signer
+path: tools/signer
+namespace: signer
+project: default
