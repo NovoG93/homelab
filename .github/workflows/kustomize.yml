@@ -16,10 +16,12 @@ jobs:
 
 
       - name: Run Kustomize Action
-        uses: NovoG93/kusotmize-action@main
+        uses: NovoG93/kustomize-action@main
         id: kustomize
         with:
           working-directory: "."
           changed-only: "false"
           fail-on-error: "true"
           output-dir: "manifests"
+          ignore-dirs: "kind"
+          
