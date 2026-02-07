@@ -1,0 +1,4 @@
+name: roboticscontentlab
+path: apps/rcl
+namespace: rcl
+project: default

@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: robotics-content-lab
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "robotics-content-lab.novotny.live"
+  labels:
+    funnel: "true"
+spec:
+  externalDNS:
+    enable: true
+  host: robotics-content-lab.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: robotics-content-lab
+    service: robotics-content-lab-service
+    port: 80
+  routes:
+  - path: /
+    action:
+      pass: robotics-content-lab
