@@ -6,5 +6,3 @@ metadata:
 
 resources: 
 - netshoot.yaml
-- netshoot-mtls.yaml
-- cluster-issuer-internal.yaml
