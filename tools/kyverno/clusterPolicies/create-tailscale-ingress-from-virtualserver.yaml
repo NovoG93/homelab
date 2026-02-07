@@ -22,6 +22,12 @@ spec:
             matchLabels:
               ignore-ts: "true"
       - resources:
+          kinds:
+          - k8s.nginx.org/v1/VirtualServer
+          selector:
+            matchLabels:
+              funnel: "true"
+      - resources:
           kinds: ["Namespace"]
           names:
           - "!wildcard-tls"
