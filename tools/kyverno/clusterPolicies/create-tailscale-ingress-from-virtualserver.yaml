@@ -81,11 +81,6 @@ spec:
       - resources:
           kinds:
           - k8s.nginx.org/v1/VirtualServer
-    include:
-      any:
-      - resources:
-          kinds:
-          - k8s.nginx.org/v1/VirtualServer
           selector:
             matchLabels:
               funnel: "true"
