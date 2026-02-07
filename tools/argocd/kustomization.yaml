@@ -5,6 +5,7 @@ metadata:
 namespace: argocd
 
 resources:
+- httproute.yaml
 - virtualserver.yaml
 - appSets
 

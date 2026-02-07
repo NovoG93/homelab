@@ -31,6 +31,6 @@ metadata:
 data:
   POSTGRES_HOST: db-service
   POSTGRES_PORT: "5432"
-  CORS_ALLOWED_ORIGINS: "http://localhost,http://localhost:3000,http://127.0.0.1,https://robotics-content-lab.novotny.live,https://robotics-content-lab-rcl.tail73aecd.ts.net"
-  ALLOWED_HOSTS: "localhost,127.0.0.1,robotics-content-lab.novotny.live,backend,backend-service,backend-service.rcl,backend-service.rcl.svc.cluster.local,robotics-content-lab-rcl.tail73aecd.ts.net"
+  CORS_ALLOWED_ORIGINS: "http://localhost,http://localhost:3000,http://127.0.0.1,https://robotics-content-lab.novotny.live,https://robotics-content-lab-rcl.tail73aecd.ts.net,https://robotics-content-lab-gateway.novotny.live"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,robotics-content-lab.novotny.live,backend,backend-service,backend-service.rcl,backend-service.rcl.svc.cluster.local,robotics-content-lab-rcl.tail73aecd.ts.net,robotics-content-lab-gateway.novotny.live"
   RUN_SEED_DATA: "true"

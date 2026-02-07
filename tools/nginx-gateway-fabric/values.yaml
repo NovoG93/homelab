@@ -1,0 +1,68 @@
+nginxGateway:
+  gatewayClassName: nginx
+  
+  # Configure the service to expose the Gateway
+  service:
+    create: true
+    type: LoadBalancer
+    # Using .212 to utilize the next available IP in your MetalLB pool
+    loadBalancerIP: "192.168.0.212" 
+    annotations:
+      metallb.universe.tf/allow-shared-ip: "nginx-gateway"
+
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+  
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "In"
+                values:
+                  - "true"
+
+nginx:
+  container:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  
+  pod:
+    tolerations:
+      - key: "tools"
+        operator: "Exists"
+        effect: "NoSchedule"
+    
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: "tools"
+                  operator: "In"
+                  values:
+                    - "true"
+
+certGenerator:
+  tolerations:
+    - key: "tools"
+      operator: "Exists"
+      effect: "NoSchedule"
+  
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "tools"
+                operator: "In"
+                values:
+                  - "true"

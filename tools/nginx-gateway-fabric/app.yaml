@@ -1,0 +1,4 @@
+name: nginx-gateway-fabric
+path: tools/nginx-gateway-fabric
+namespace: nginx-gateway
+project: default

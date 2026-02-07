@@ -1,0 +1,18 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: obsidian-couchdb-http
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: nginx-gateway
+  hostnames:
+    - couchdb-gateway.novotny.live
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: obsidian-svc-couchdb
+          port: 5984

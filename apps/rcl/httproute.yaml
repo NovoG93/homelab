@@ -1,0 +1,19 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: robotics-content-lab-http
+spec:
+  parentRefs:
+    - name: homelab-gateway
+      namespace: nginx-gateway
+      sectionName: https
+  hostnames:
+    - robotics-content-lab-gateway.novotny.live
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: robotics-content-lab-service
+          port: 80

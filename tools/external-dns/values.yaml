@@ -42,6 +42,7 @@ sources:
   - crd
   - service
   - ingress
+  - gateway-httproute
 
 # Extra arguments for external-dns
 extraArgs:
