@@ -30,6 +30,7 @@ spec:
           - CreateNamespace=true
           - PrunePropagationPolicy=foreground
           - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -63,6 +64,7 @@ spec:
           - CreateNamespace=true
           - PrunePropagationPolicy=foreground
           - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -96,3 +98,4 @@ spec:
           - CreateNamespace=true
           - PrunePropagationPolicy=foreground
           - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
