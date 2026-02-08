@@ -8,6 +8,7 @@ resources:
 - httproute.yaml
 - virtualserver.yaml
 - appSets
+- clusters
 
 helmGlobals:
   chartHome: ../../helmCharts/
