@@ -1,0 +1,4 @@
+name: signer-kind
+path: kind/tools/signer
+namespace: signer
+project: default

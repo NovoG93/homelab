@@ -1,0 +1,43 @@
+# HA Configuration: Set replicaCount > 1 for high-availability deployments
+# Leader election will ensure only one replica signs certificates at a time
+replicaCount: 2
+
+tolerations:
+  # Tolerate tools taint (wp1)
+  - key: "tools"
+    operator: "Exists"
+    effect: "NoSchedule"
+  # Tolerate apps taint (wp2)
+  - key: "apps"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+# # Pod Disruption Budget for safe rolling upgrades (enable for replicaCount > 1)
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        # Allow either tools=true (wp1) OR apps=true (wp2)
+        - matchExpressions:
+            - key: "tools"
+              operator: "Exists"
+        - matchExpressions:
+            - key: "apps"
+              operator: "Exists"
+  # Pod anti-affinity spreads replicas across different nodes for HA
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - signer
+          topologyKey: kubernetes.io/hostname
+
