@@ -1,0 +1,101 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: core-appset-kind
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/NovoG93/homelab
+        revision: main
+        files:
+          - path: "kind/core/**/app.yaml"
+  template:
+    metadata:
+      name: "{{ .name }}"
+      labels:
+        group: core-kind
+    spec:
+      project: "{{ .project }}"
+      source:
+        repoURL: https://github.com/NovoG93/homelab
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        name: kind-dev
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: tools-appset-kind
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/NovoG93/homelab
+        revision: main
+        files:
+          - path: "kind/tools/**/app.yaml"
+  template:
+    metadata:
+      name: "{{ .name }}"
+      labels:
+        group: tools-kind
+    spec:
+      project: "{{ .project }}"
+      source:
+        repoURL: https://github.com/NovoG93/homelab
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        name: kind-dev
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-appset-kind
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/NovoG93/homelab
+        revision: main
+        files:
+          - path: "kind/apps/**/app.yaml"
+  template:
+    metadata:
+      name: "{{ .name }}"
+      labels:
+        group: apps-kind
+    spec:
+      project: "{{ .project }}"
+      source:
+        repoURL: https://github.com/NovoG93/homelab
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        name: kind-dev
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true

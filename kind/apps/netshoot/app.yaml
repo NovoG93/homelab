@@ -1,4 +1,4 @@
-name: nginx
-path: kind/apps/nginx
+name: netshoot-kind
+path: kind/apps/netshoot
 namespace: default
 project: default

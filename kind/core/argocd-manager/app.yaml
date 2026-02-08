@@ -1,0 +1,4 @@
+name: argocd-manager-kind
+path: kind/core/argocd-manager
+namespace: kube-system
+project: default

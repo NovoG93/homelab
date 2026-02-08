@@ -1,4 +1,4 @@
-name: metallb
+name: metallb-kind
 path: kind/core/metallb-system
 namespace: metallb-system
 project: default

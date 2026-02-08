@@ -1,4 +1,4 @@
-name: wildcard-tls
+name: wildcard-tls-kind
 path: kind/tools/wildcard-tls
 namespace: wildcard-tls
 project: default

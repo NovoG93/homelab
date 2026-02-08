@@ -31,7 +31,7 @@ if [ -x "$(command -v kind)" ]; then
   echo "kind is already installed"
 else
   echo "kind not found, installing..."
-  curl -Lo ./kind https://kind.sigs.k8s.io/dl/v${KIND_VERSION}/kind-linux-${ARCH}
+  curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v${KIND_VERSION}/kind-linux-${ARCH}"
   chmod +x ./kind
   sudo mv ./kind /usr/local/bin/kind
 fi
@@ -44,3 +44,7 @@ envsubst < "${BASE_DIR}/cluster.yaml.tmpl" > "${BASE_DIR}/cluster.yaml"
 echo "Creating kind cluster ${CLUSTER_NAME}..."
 kind delete cluster --name "${CLUSTER_NAME}" || true
 kind create cluster --name "${CLUSTER_NAME}" --config "${BASE_DIR}/cluster.yaml"
+
+# Register the kind cluster with prod ArgoCD
+echo "Registering kind cluster with ArgoCD..."
+"${BASE_DIR}/register-cluster.bash" "${CLUSTER_NAME}"

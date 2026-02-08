@@ -1,4 +1,4 @@
-name: nginx-ingress
+name: nginx-ingress-kind
 path: kind/tools/nginx-ingress
 namespace: nginx-ingress
 project: default

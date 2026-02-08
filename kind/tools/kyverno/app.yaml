@@ -1,4 +1,4 @@
-name: kyverno
+name: kyverno-kind
 path: kind/tools/kyverno
 namespace: kyverno
 project: default

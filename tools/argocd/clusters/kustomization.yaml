@@ -5,10 +5,4 @@ metadata:
 namespace: argocd
 
 resources:
-- apps.yaml
-- tools.yaml
-- core.yaml
-- kind.yaml
-
-generatorOptions:
-  disableNameSuffixHash: true
+  - kind-dev-secret.yaml

@@ -1,4 +1,4 @@
-name: metrics-server
+name: metrics-server-kind
 path: kind/core/metrics-server
 namespace: kube-system
 project: default
