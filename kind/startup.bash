@@ -19,11 +19,10 @@ esac
 KIND_VERSION="${1:-"0.30.0"}"
 KUBECTL_VERSION="${2:-"1.35.0"}"
 CLUSTER_NAME="${3:-"homelab-dev"}"
+INITIAL_CONTEXT="${4:-"homelab"}"
 
 
 echo "Starting kind cluster setup with kind version ${KIND_VERSION} and kubectl version ${KUBECTL_VERSION}..."
-
-
 
 # Install kind
 echo "Checking kind installation..."
@@ -38,13 +37,15 @@ fi
 
 # Patching IP address in cluster configuration
 export IP_ADDR
-envsubst < "${BASE_DIR}/cluster.yaml.tmpl" > "${BASE_DIR}/cluster.yaml"
+envsubst '$IP_ADDR' < "${BASE_DIR}/cluster.yaml.tmpl" > "${BASE_DIR}/cluster.yaml"
 
 # Startup kind cluster
 echo "Creating kind cluster ${CLUSTER_NAME}..."
 kind delete cluster --name "${CLUSTER_NAME}" || true
-kind create cluster --name "${CLUSTER_NAME}" --config "${BASE_DIR}/cluster.yaml"
+kind create cluster --name "${CLUSTER_NAME}" --image kindest/node:v${KUBECTL_VERSION} --config "${BASE_DIR}/cluster.yaml"
 
 # Register the kind cluster with prod ArgoCD
 echo "Registering kind cluster with ArgoCD..."
-"${BASE_DIR}/register-cluster.bash" "${CLUSTER_NAME}"
+envsubst '$IP_ADDR' < "${BASE_DIR}/register-cluster.bash.tmpl" > "${BASE_DIR}/register-cluster.bash"
+chmod +x "${BASE_DIR}/register-cluster.bash"
+"${BASE_DIR}/register-cluster.bash" "${CLUSTER_NAME}" "${INITIAL_CONTEXT}"
