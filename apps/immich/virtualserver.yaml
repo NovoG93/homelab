@@ -6,7 +6,7 @@ metadata:
     # external-dns will read the host from .spec.host
     external-dns.alpha.kubernetes.io/hostname: "immich.novotny.live"
   labels:
-    tailscale.com/funnel: "false"
+    funnel: "true"
 spec:
   externalDNS:
     enable: true

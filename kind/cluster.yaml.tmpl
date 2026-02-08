@@ -1,12 +1,18 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-name: homelab-dev
+
+
+featureGates:
+  PodCertificateRequest: true
+runtimeConfig:
+  "certificates.k8s.io/v1beta1/podcertificaterequests": "true"
 
 networking:
   apiServerAddress: "0.0.0.0"
   disableDefaultCNI: true
   podSubnet: "10.244.0.0/16"
   serviceSubnet: "10.96.0.0/12"
+  apiServerPort: 5510
 
 nodes:
 - role: control-plane
@@ -15,17 +21,14 @@ nodes:
     kind: ClusterConfiguration
     apiServer:
       certSANs:
-        - "192.168.0.46" # IP of host machine in LAN
-        - "0.0.0.0". # Allow access from all interfaces
+        - "$IP_ADDR" # IP of host machine in LAN
+        - "0.0.0.0" # Allow access from all interfaces
   extraPortMappings:
     - containerPort: 80
       hostPort: 80
       protocol: TCP
     - containerPort: 443
       hostPort: 443
-      protocol: TCP
-    - containerPort: 6443 
-      hostPort: 5510
       protocol: TCP
   labels:
     ingress-ready: "true"
