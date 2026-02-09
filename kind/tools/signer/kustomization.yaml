@@ -13,3 +13,8 @@ helmCharts:
   namespace: signer
   valuesFile: values.yaml
 
+
+images:
+- name: ghcr.io/novog93/signer
+  newName: ghcr.io/novog93/signer
+  newTag: "latest"
