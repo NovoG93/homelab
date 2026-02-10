@@ -86,6 +86,33 @@ else
   echo "  caData=\"${CA_DATA}\""
 fi
 echo ""
+
+echo "=== Bootstrapping External Secrets (Vault Token) ==="
+
+ESO_NS="external-secret-operator"
+
+# 1. Create the namespace for ESO (idempotent)
+kubectl --context "${CONTEXT}" create namespace "${ESO_NS}" --dry-run=client -o yaml \
+  | kubectl --context "${CONTEXT}" apply -f -
+
+# 2. Generate a periodic Vault token for the Kind cluster
+#    period=720h (30 days) — token auto-renews on each ESO refresh cycle.
+echo "Generating Vault token for Kind cluster..."
+KIND_VAULT_TOKEN=$(kubectl --context "${INITIAL_CONTEXT}" -n vault exec vault-0 -- \
+  env VAULT_TOKEN="${VAULT_ROOT_TOKEN}" \
+  vault token create -policy=admin -period=720h -field=token 2>/dev/null)
+
+if [ -z "${KIND_VAULT_TOKEN}" ]; then
+  echo "ERROR: Failed to generate Vault token. ESO will not work."
+else
+  echo "Injecting 'vault-token' secret into '${ESO_NS}' namespace..."
+  kubectl --context "${CONTEXT}" -n "${ESO_NS}" create secret generic vault-token \
+    --from-literal=token="${KIND_VAULT_TOKEN}" \
+    --dry-run=client -o yaml | kubectl --context "${CONTEXT}" apply -f -
+  echo "✓ vault-token secret created successfully"
+fi
+echo ""
+
 echo "================================================"
 echo "  Replacing the old ExternalSecret (if exists)  "
 echo "================================================"

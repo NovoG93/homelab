@@ -1,0 +1,7 @@
+installCRDs: true
+webhook:
+  create: true
+certController:
+  create: true
+namespaceOverride: external-secret-operator
+revisionHistoryLimit: 5

@@ -1,0 +1,4 @@
+name: external-secret-operator-kind
+project: default
+path: kind/tools/external-secret-operator
+namespace: external-secret-operator

@@ -61,7 +61,7 @@ kind/
 | **Storage** | NFS/SMB | local-path-provisioner |
 | **Domain** | *.novotny.live | *.127.0.0.1.nip.io |
 | **VPN** | Tailscale | Disabled |
-| **External DNS** | Cloudflare | Disabled |
+| **External DNS** | PiHole | Disabled |
 | **Sync Policy** | Automated (self-heal) | Manual sync |
 
 ## Quick Start
@@ -121,21 +121,6 @@ Using `nip.io` avoids the need for `/etc/hosts` entries.
 Access services via:
 - `https://nginx.127.0.0.1.nip.io`
 
-## Adding More Apps
-
-To add a new app for kind:
-
-1. Create overlay directory: `kind/apps/<app-name>/`
-2. Create `kustomization.yaml` referencing base: `resources: [../../../apps/<app-name>]`
-3. Create `app.yaml` with:
-   ```yaml
-   name: <app-name>-kind
-   path: kind/apps/<app-name>
-   namespace: <namespace>
-   project: default
-   ```
-4. Add patches as needed for kind-specific config
-5. Commit and push - ArgoCD will detect the new `app.yaml` via the ApplicationSet
 
 ## Excluded Components
 
@@ -144,8 +129,8 @@ The following production components are not included in kind:
 - `nfs-provisioner` - Replaced by local-path-provisioner
 - `smb-provisioner` - Replaced by local-path-provisioner
 - `external-dns` - No external DNS for local dev
-- `vault` - Not needed in kind; secrets come from prod Vault via ExternalSecret
-- Heavy apps (immich, couchdb, postiz-app) - Require significant resources
+- `vault` - TBD
+- Heavy apps (immich, couchdb, postiz-app) - TBD
 
 ## Troubleshooting
 
