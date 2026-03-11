@@ -5,6 +5,7 @@ metadata:
 
 resources:
 - ../../../tools/nginx-ingress
+- namespace.yaml
 
 patches:
 - path: patch-hostport.json

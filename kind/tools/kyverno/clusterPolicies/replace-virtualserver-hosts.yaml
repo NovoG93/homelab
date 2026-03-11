@@ -1,0 +1,31 @@
+apiVersion: policies.kyverno.io/v1alpha1
+kind: MutatingPolicy
+metadata:
+  name: replace-virtualserver-hosts
+spec:
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - k8s.nginx.org
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - virtualservers
+  evaluation:
+    admission:
+      enabled: true
+    mutateExisting:
+      enabled: false
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: |
+          has(object.spec.host) && object.spec.host.endsWith('.novotny.live') ?
+          [JSONPatch{
+            op: "replace",
+            path: "/spec/host",
+            value: object.spec.host.replace('.novotny.live', '.127.0.0.1.nip.io')
+          }] : []

@@ -8,3 +8,6 @@ test*.yaml
 *.crt
 *.csr
 helmCharts*
+kind/cluster.yaml
+kind/hack/register-cluster.bash
+action

@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kind-apps-appset
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/NovoG93/homelab
+        revision: main
+        files:
+          - path: "kind/apps/**/app.yaml"
+  template:
+    metadata:
+      name: "{{ .name }}"
+      labels:
+        group: apps
+    spec:
+      project: "{{ .project }}"
+      source:
+        repoURL: https://github.com/NovoG93/homelab
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true

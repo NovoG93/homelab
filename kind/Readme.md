@@ -33,8 +33,12 @@ Credentials flow: `kind cluster` → `register-cluster.bash` → **user stores i
 
 ```
 kind/
-├── startup.bash           # Creates kind cluster + runs register-cluster.bash
-├── register-cluster.bash  # Extracts credentials, prints vault kv put command
+├── scripts/
+│   ├── lifecycle.bash             # Orchestrator: startup, initial-deploy, register, stop, reset
+│   ├── startup.bash               # Wrapper to lifecycle startup
+│   ├── initial_deploy.bash        # Applies root overlays (core/tools/apps) to kind
+│   ├── register-cluster.bash.tmpl # Template for prod registration script
+│   └── register-cluster.bash      # Generated when prod registration runs
 ├── cluster.yaml.tmpl      # Kind cluster config template
 ├── core/                  # Core infrastructure overlays
 │   ├── argocd-manager/    # SA + ClusterRole for prod ArgoCD access
@@ -69,16 +73,31 @@ kind/
 ### 1. Create the Cluster
 
 ```bash
-# This creates the kind cluster and extracts ArgoCD credentials
-./kind/startup.bash
+# Local mode (default): deploy kind with in-cluster ArgoCD resource enabled
+./kind/hack/lifecycle.bash startup
+
+# Prod mode: do not deploy in-cluster ArgoCD, register kind to prod ArgoCD/Vault
+./kind/hack/lifecycle.bash startup --sync-mode prod
+
+# Startup wrapper alias
+./kind/hack/startup.bash
 ```
 
 The script will:
 1. Install `kind` if not present
 2. Template `cluster.yaml` with your LAN IP
 3. Create a 3-node kind cluster (`homelab-dev`)
-4. Apply the `argocd-manager` ServiceAccount to the kind cluster
-5. Print a `vault kv put` command with the extracted credentials
+4. Apply initial root overlays: `core`, `tools`, `apps`
+5. In `--sync-mode prod`, run registration + Vault/ESO bootstrap
+
+Additional lifecycle commands:
+
+```bash
+./kind/hack/lifecycle.bash initial-deploy --cluster-name homelab-dev
+./kind/hack/lifecycle.bash register --cluster-name homelab-dev --context homelab
+./kind/hack/lifecycle.bash stop --cluster-name homelab-dev
+./kind/hack/lifecycle.bash reset --cluster-name homelab-dev --sync-mode local
+```
 
 ### 2. Store Credentials in Vault
 
@@ -145,7 +164,7 @@ The following production components are not included in kind:
 After recreating the kind cluster, run `register-cluster.bash` again and update the Vault secret:
 
 ```bash
-./kind/register-cluster.bash
+./kind/hack/lifecycle.bash register --cluster-name homelab-dev --context homelab
 # Then run the printed vault kv put command
 ```
 
@@ -158,5 +177,5 @@ After recreating the kind cluster, run `register-cluster.bash` again and update 
 ## Cleanup
 
 ```bash
-kind delete cluster --name homelab-dev
+./kind/hack/lifecycle.bash stop --cluster-name homelab-dev
 ```

@@ -3,8 +3,6 @@ kind: Kustomization
 metadata:
   name: kustomization
 
-namespace: default
-
 resources:
-- ../../../apps/netshoot
-
+- netshoot
+- nginx

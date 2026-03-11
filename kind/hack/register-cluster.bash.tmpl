@@ -9,10 +9,11 @@ GIT_DIR="$(git rev-parse --show-toplevel)"
 BASE_DIR="${GIT_DIR}/kind"
 CLUSTER_NAME="${1:-"homelab-dev"}"
 INITIAL_CONTEXT="${2:-"homelab"}"
+ARGOCD_CLUSTER_SECRET_FILE="${ARGOCD_CLUSTER_SECRET_FILE:-${GIT_DIR}/tools/argocd/clusters/kind-dev-secret.yaml}"
 
 # Define the Host LAN IP (Ref: kind/cluster.yaml certSANs)
 # This is required so Prod can reach Kind.
-HOST_IP="192.168.0.81"
+HOST_IP="$IP_ADDR"
 PORT="5510"
 
 CONTEXT="kind-${CLUSTER_NAME}"
@@ -76,7 +77,7 @@ if [ -n "${VAULT_ROOT_TOKEN}" ]; then
     caData="${CA_DATA}"
   echo "✓ Credentials successfully pushed to Vault"
 else
-  echo "# WARNING: Could not read Vault root token from ${VAULT_KEYS_FILE}"
+  echo "# WARNING: Could not read Vault root token from vault-0 /tmp/keys/keys.json"
   echo "# Replace <VAULT_TOKEN> with your Vault token (root or admin user)"
   echo "kubectl --context homelab -n vault exec -i vault-0 -- \\"
   echo "  env VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=\"<VAULT_TOKEN>\" \\"
@@ -86,11 +87,43 @@ else
   echo "  caData=\"${CA_DATA}\""
 fi
 echo ""
+
+echo "=== Bootstrapping External Secrets (Vault Token) ==="
+
+ESO_NS="external-secret-operator"
+
+# 1. Create the namespace for ESO (idempotent)
+kubectl --context "${CONTEXT}" create namespace "${ESO_NS}" --dry-run=client -o yaml \
+  | kubectl --context "${CONTEXT}" apply -f -
+
+# 2. Generate a periodic Vault token for the Kind cluster
+#    period=720h (30 days) — token auto-renews on each ESO refresh cycle.
+echo "Generating Vault token for Kind cluster..."
+KIND_VAULT_TOKEN=$(kubectl --context "${INITIAL_CONTEXT}" -n vault exec vault-0 -- \
+  env VAULT_TOKEN="${VAULT_ROOT_TOKEN}" \
+  vault token create -policy=admin -period=720h -field=token 2>/dev/null)
+
+if [ -z "${KIND_VAULT_TOKEN}" ]; then
+  echo "ERROR: Failed to generate Vault token. ESO will not work."
+else
+  echo "Injecting 'vault-token' secret into '${ESO_NS}' namespace..."
+  kubectl --context "${CONTEXT}" -n "${ESO_NS}" create secret generic vault-token \
+    --from-literal=token="${KIND_VAULT_TOKEN}" \
+    --dry-run=client -o yaml | kubectl --context "${CONTEXT}" apply -f -
+  echo "✓ vault-token secret created successfully"
+fi
+echo ""
+
 echo "================================================"
 echo "  Replacing the old ExternalSecret (if exists)  "
 echo "================================================"
-kubectl --context "${INITIAL_CONTEXT}" -n argocd delete -f "${GIT_DIR}/tools/argocd/clusters/kind-dev-secret.yaml" --ignore-not-found
-kubectl --context "${INITIAL_CONTEXT}" -n argocd apply -f "${GIT_DIR}/tools/argocd/clusters/kind-dev-secret.yaml"
+if [ -f "${ARGOCD_CLUSTER_SECRET_FILE}" ]; then
+  kubectl --context "${INITIAL_CONTEXT}" -n argocd delete -f "${ARGOCD_CLUSTER_SECRET_FILE}" --ignore-not-found
+  kubectl --context "${INITIAL_CONTEXT}" -n argocd apply -f "${ARGOCD_CLUSTER_SECRET_FILE}"
+else
+  echo "WARNING: ArgoCD cluster secret manifest not found: ${ARGOCD_CLUSTER_SECRET_FILE}"
+  echo "Skipping manifest apply step. Set ARGOCD_CLUSTER_SECRET_FILE to override the path."
+fi
 echo ""
 echo "=============================================="
 echo ""

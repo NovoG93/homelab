@@ -3,8 +3,9 @@ kind: Kustomization
 metadata:
   name: kustomization
 
-namespace: default
-
 resources:
-- ../../../apps/netshoot
+- virtualservers.yaml
 
+  
+generatorOptions:
+  disableNameSuffixHash: true

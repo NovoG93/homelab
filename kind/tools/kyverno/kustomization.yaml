@@ -6,6 +6,8 @@ namespace: kyverno
 
 resources:
 - ../../../tools/kyverno
+- clusterPolicies
+- roles
 - namespace.yaml
 
 
