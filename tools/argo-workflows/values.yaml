@@ -1,0 +1,8 @@
+crds:
+  install: true
+
+server:
+  secure: false
+  authModes: [server]
+
+singleNamespace: true

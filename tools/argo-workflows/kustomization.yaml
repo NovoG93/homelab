@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: kustomization
+namespace: argo
+
+
+helmGlobals:
+  chartHome: ../../helmCharts/
+
+resources:
+- virtualserver.yaml
+- httproute.yaml
+
+helmCharts:
+- includeCRDs: true
+  name: argo-workflows
+  repo: https://argoproj.github.io/argo-helm
+  version: 0.47.5
+  releaseName: argo-workflows
+  namespace: argo
+  valuesFile: values.yaml
+
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+
+# ❯ helm upgrade argo-workflows argo/argo-workflows \
+#   --namespace argo \
+#   --version=0.47.4 \
+#   --set crds.install=false \
+#   --set server.serviceType=NodePort \
+#   --set server.serviceNodePort=32746 \
+#   --set server.secure=true \
+#   --set "server.authModes={server}"

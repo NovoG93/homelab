@@ -1,0 +1,4 @@
+name: argo-workflows
+path: tools/argo-workflows
+namespace: argo
+project: default

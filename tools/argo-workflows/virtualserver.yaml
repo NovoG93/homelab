@@ -1,0 +1,21 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: argo-workflows
+  namespace: argo
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "argo-workflows.novotny.live"
+spec:
+  externalDNS:
+    enable: true
+  host: argo-workflows.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: argo-workflows-server
+    service: argo-workflows-server
+    port: 2746
+  routes:
+  - path: /
+    action:
+      pass: argo-workflows-server

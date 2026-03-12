@@ -1,0 +1,4 @@
+name: argo-workflows-kind
+path: kind/tools/argo-workflows
+namespace: argo-workflows
+project: default
