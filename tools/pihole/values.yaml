@@ -2,6 +2,11 @@
 serviceDhcp:
   enabled: false
 
+strategyType: "RollingUpdate"
+maxSurge: 1
+maxUnavailable: 0
+
+
 # -- Configuration for the DNS service on port 53
 serviceDns:
   # -- `spec.type` for the DNS Service
@@ -15,6 +20,9 @@ serviceDns:
   annotations:
     metallb.universe.tf/allow-shared-ip: pihole-svc
     # metallb.universe.tf/address-pool: network-services
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: "pihole-dns"
+    tailscale.com/proxy-class: "tool-node-config"
 
 
 
@@ -112,35 +120,6 @@ affinity:
 
 blacklist: 
 - "*.9gag.com"
-
-
-extraContainers:
-- name: ts-sidecar
-  imagePullPolicy: Always
-  image: "ghcr.io/tailscale/tailscale:latest"
-  env:
-  - name: TS_USERSPACE
-    value: "false"
-  - name: TS_DEBUG_FIREWALL_MODE
-    value: auto
-  - name: TS_KUBE_SECRET
-    value: "tailscale-state"
-  - name: TS_AUTHKEY
-    valueFrom:
-      secretKeyRef:
-        name: tailscale-auth-key
-        key: auth-key
-        optional: true
-  - name: POD_NAME
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.name
-  - name: POD_UID
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.uid
-  securityContext:
-    privileged: true
 
 dnsmasq:
   enableCustomDnsMasq: true

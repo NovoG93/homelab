@@ -10,10 +10,6 @@ resources:
 - httproute.yaml
 - virtualserver.yaml
 - es-pihole-password.yaml
-- es-tailscale-auth-key.yaml
-- tailscale-sa.yaml
-- tailscale-role.yaml
-- tailscale-rolebinding.yaml
 
 helmCharts:
 - includeCRDs: true
@@ -29,13 +25,5 @@ patches:
     kind: Pod
     name: pihole-smoke-test
   path: smoke-test-patch.yaml
-- target:
-    kind: Deployment
-    name: pihole
-  patch: |-
-    - op: add
-      path: /spec/template/spec/serviceAccountName
-      value: tailscale
-
 generatorOptions:
   disableNameSuffixHash: true
