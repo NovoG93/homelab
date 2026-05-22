@@ -8,7 +8,7 @@ resources:
 - apps.yaml
 - tools.yaml
 - core.yaml
-- kind.yaml
+# - kind.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

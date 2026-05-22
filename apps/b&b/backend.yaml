@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      labels:
+        app: backend
+    spec:
+      volumes:
+      - name: media-storage
+        persistentVolumeClaim:
+          claimName: media-pvc
+      initContainers:
+      - name: init-media
+        image: ghcr.io/novog93/beans-and-bites/backend:latest
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Initializing media volume..."
+            cp -rn /app/media/. /app/pvc-media/
+            echo "Media initialization complete."
+        volumeMounts:
+        - mountPath: /app/pvc-media
+          name: media-storage
+      containers:
+      - name: backend
+        volumeMounts:
+        - mountPath: /app/media
+          name: media-storage
+        image: ghcr.io/novog93/beans-and-bites/backend:latest
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: db-credentials
+        - configMapRef:
+            name: backend-config
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

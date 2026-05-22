@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: beans-and-bites
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "beans-and-bites.novotny.live"
+  labels:
+    funnel: "false"
+spec:
+  externalDNS:
+    enable: true
+  host: beans-and-bites.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: beans-and-bites
+    service: beans-and-bites-service
+    port: 80
+  routes:
+  - path: /
+    action:
+      pass: beans-and-bites
