@@ -23,6 +23,10 @@ spec:
     remoteRef:
       key: apps/rcl/db-credentials
       property: POSTGRES_PASSWORD
+  - secretKey: SECRET_KEY
+    remoteRef:
+      key: apps/rcl/db-credentials
+      property: SECRET_KEY
 ---
 apiVersion: v1
 kind: ConfigMap
