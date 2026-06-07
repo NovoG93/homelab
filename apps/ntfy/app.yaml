@@ -1,0 +1,4 @@
+name: ntfy
+path: apps/ntfy
+namespace: ntfy
+project: default

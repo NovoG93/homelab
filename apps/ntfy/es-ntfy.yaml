@@ -1,0 +1,20 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ntfy-secrets
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-dev
+    kind: ClusterSecretStore
+  target:
+    name: ntfy-secrets
+    deletionPolicy: Delete
+  data:
+    - secretKey: NTFY_BASE_URL
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/ntfy
+        property: NTFY_EXTERNAL_URL

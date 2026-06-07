@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: ntfy
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "ntfy.novotny.live"
+  labels:
+    funnel: "false"
+spec:
+  externalDNS:
+    enable: true
+  host: ntfy.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: ntfy
+    service: ntfy
+    port: 10222
+  routes:
+  - path: /
+    action:
+      pass: ntfy

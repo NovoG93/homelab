@@ -1,0 +1,48 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: immich-memories-notify-secrets
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-dev
+    kind: ClusterSecretStore
+  target:
+    name: immich-memories-notify-secrets
+    deletionPolicy: Delete
+  data:
+    - secretKey: IMMICH_EXTERNAL_URL
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/ntfy
+        property: IMMICH_EXTERNAL_URL
+    - secretKey: IMMICH_API_KEY
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/ntfy
+        property: IMMICH_API_KEY
+    - secretKey: NTFY_EXTERNAL_URL
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/ntfy
+        property: NTFY_EXTERNAL_URL
+    - secretKey: DASHBOARD_USER
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/ntfy
+        property: DASHBOARD_USER
+    - secretKey: DASHBOARD_TOKEN
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        key: apps/immich/ntfy
+        property: DASHBOARD_TOKEN

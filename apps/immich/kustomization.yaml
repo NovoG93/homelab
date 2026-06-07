@@ -15,6 +15,8 @@ resources:
 - cloudnative-pg/pg-db.yaml
 - es-immich-postgres-user.yaml
 - es-smb-creds.yaml
+- notify.yaml
+- es-nfty.yaml
 
 helmCharts:
 - includeCRDs: true

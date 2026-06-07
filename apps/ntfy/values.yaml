@@ -1,0 +1,50 @@
+
+# yaml-language-server: $schema=./values.schema.json
+image:
+  repository: docker.io/binwiederhier/ntfy
+  tag: v2.24.0@sha256:f8a9b104313b87cc24ae4f775f39e6328205b57dff6ede3eaf098a91e5d79f59
+  pullPolicy: IfNotPresent
+persistence:
+  config:
+    enabled: true
+    mountPath: "/etc/ntfy"
+  cache:
+    enabled: true
+    mountPath: "/var/cache/ntfy"
+
+
+workload:
+  main:
+    podSpec:
+      tolerations:
+        - key: apps
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        main:
+          probes:
+            liveness:
+              type: tcp
+            readiness:
+              type: tcp
+            startup:
+              type: tcp
+          args:
+            - "serve"
+          env:
+            NTFY_LISTEN_HTTP: ":{{ .Values.service.main.ports.main.port }}"
+            # User Defined
+            NTFY_BEHIND_PROXY: false
+            ENABLE_FIREBASE_FILE: false
+            ENABLE_CACHE_FILE: false
+            ENABLE_ATTACHMENT_CACHE_DIR: true
+            ENABLE_AUTH_FILE: true
+            NTFY_ENABLE_METRICS: "{{ .Values.metrics.main.enabled }}"
+            NTFY_UPSTREAM_BASE_URL: "https://ntfy.sh"
+            NTFY_BASE_URL: null
+          envFrom:
+            - configMapRef:
+                name: "ntfy"
+            - secretRef:
+                name: "ntfy-secrets"
+                expandObjectName: false
