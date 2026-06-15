@@ -9,6 +9,7 @@ namespace: rcl
 resources:
 - config.yaml
 - virtualserver.yaml
+- virtualserver-api.yaml
 - httproute.yaml
 - backend.yaml
 - frontend.yaml

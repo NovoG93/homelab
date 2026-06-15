@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: robotics-content-lab-api
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "rcl-api.novotny.live"
+  labels:
+    funnel: "false"
+spec:
+  externalDNS:
+    enable: true
+  host: rcl-api.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: robotics-content-lab-api
+    service: backend-service
+    port: 8000
+  routes:
+  - path: /
+    action:
+      pass: robotics-content-lab-api
