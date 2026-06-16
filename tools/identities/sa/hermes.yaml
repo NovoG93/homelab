@@ -3,3 +3,12 @@ kind: ServiceAccount
 metadata:
   name: hermes
   namespace: rcl
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-token
+  namespace: rcl
+  annotations:
+    kubernetes.io/service-account.name: hermes
+type: kubernetes.io/service-account-token
