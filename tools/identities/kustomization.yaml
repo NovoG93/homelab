@@ -2,8 +2,12 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - clusterroles/admin.yaml
+- clusterroles/mcp-viewer.yaml
 - clusterroles/reader.yaml
 - roles/harbor.yaml
+- roles/hermes.yaml
+- sa/hermes.yaml
+- sa/mcp-viewer.yaml
 - bindings/georg-homelab-admin-binding.yaml
 - bindings/elena-homelab-reader-binding.yaml
 - bindings/elena-homelab-harbor-harbor-binding.yaml

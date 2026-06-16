@@ -31,6 +31,15 @@ if [ -d "roles" ]; then
   done
 fi
 
+# Add all service accounts found in sa/
+if [ -d "sa" ]; then
+  for sa in sa/*.yaml; do
+    if [ -f "$sa" ]; then
+      echo "- $sa" >> kustomization.yaml
+    fi
+  done
+fi
+
 # Function to find namespace for a role
 get_role_namespace() {
     local role_name="$1"

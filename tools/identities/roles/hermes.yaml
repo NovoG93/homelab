@@ -1,0 +1,26 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: homelab:hermes
+  namespace: rcl
+rules:
+- apiGroups:
+  - "*"
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hermes-binding
+  namespace: rcl
+subjects:
+- kind: ServiceAccount
+  name: hermes
+  namespace: rcl
+roleRef:
+  kind: Role
+  name: homelab:hermes
+  apiGroup: rbac.authorization.k8s.io
