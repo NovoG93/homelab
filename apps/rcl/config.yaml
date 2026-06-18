@@ -27,6 +27,10 @@ spec:
     remoteRef:
       key: apps/rcl/db-credentials
       property: SECRET_KEY
+  - secretKey: MTLS_ALLOWED_CLIENTS
+    remoteRef:
+      key: apps/rcl/db-credentials
+      property: MTLS_ALLOWED_CLIENTS
 ---
 apiVersion: v1
 kind: ConfigMap
