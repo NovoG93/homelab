@@ -59,6 +59,8 @@ spec:
             name: db-credentials
         - secretRef:
             name: admin-mail-credentials
+        - secretRef:
+            name: backend-credentials
         - configMapRef:
             name: backend-config
         ports:
