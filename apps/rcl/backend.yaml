@@ -49,9 +49,14 @@ spec:
           name: media-storage
         image: ghcr.io/robotics-content-lab/website/backend:latest
         imagePullPolicy: Always
+        env:
+        - name: STAGE
+          value: "prod"
         envFrom:
         - secretRef:
             name: db-credentials
+        - secretRef:
+            name: admin-mail-credentials
         - configMapRef:
             name: backend-config
         ports:

@@ -32,6 +32,74 @@ spec:
       key: apps/rcl/db-credentials
       property: MTLS_ALLOWED_CLIENTS
 ---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: backend-credentials
+spec:
+  refreshInterval: 1h0m0s
+  secretStoreRef:
+    name: vault-dev
+    kind: ClusterSecretStore
+  target:
+    name: backend-credentials
+    creationPolicy: Owner
+  data:
+  - secretKey: DJANGO_ADMIN_USERNAME
+    remoteRef:
+      key: apps/rcl/backend-credentials
+      property: DJANGO_ADMIN_USERNAME
+  - secretKey: DJANGO_ADMIN_PASSWORD
+    remoteRef:
+      key: apps/rcl/backend-credentials
+      property: DJANGO_ADMIN_PASSWORD
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: admin-mail-credentials
+spec:
+  refreshInterval: 1h0m0s
+  secretStoreRef:
+    name: vault-dev
+    kind: ClusterSecretStore
+  target:
+    name: admin-mail-credentials
+    creationPolicy: Owner
+  data:
+  - secretKey: EMAIL_HOST
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: EMAIL_HOST
+  - secretKey: EMAIL_PORT
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: EMAIL_PORT
+  - secretKey: EMAIL_HOST_USER
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: EMAIL_HOST_USER
+  - secretKey: EMAIL_HOST_PASSWORD
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: EMAIL_HOST_PASSWORD
+  - secretKey: EMAIL_USE_SSL
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: EMAIL_USE_SSL
+  - secretKey: EMAIL_USE_TLS
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: EMAIL_USE_TLS
+  - secretKey: DEFAULT_FROM_EMAIL
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: DEFAULT_FROM_EMAIL
+  - secretKey: ADMIN_EMAIL
+    remoteRef:
+      key: apps/rcl/admin-mail-credentials
+      property: ADMIN_EMAIL
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:

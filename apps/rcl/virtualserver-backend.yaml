@@ -17,6 +17,11 @@ spec:
     service: backend-service
     port: 8000
   routes:
+  - path: =/
+    action:
+      redirect:
+        url: /admin/
+        code: 301
   - path: /
     action:
       pass: robotics-content-lab-backend
