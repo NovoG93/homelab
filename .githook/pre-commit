@@ -1,0 +1,47 @@
+#!/bin/bash
+set -euo pipefail
+
+if ! command -v kustomize &>/dev/null; then
+    echo "WARNING: kustomize not found on PATH. Skipping kustomize validation." >&2
+    exit 0
+fi
+
+collected=""
+while IFS= read -r file; do
+    case "$file" in
+        */kustomization.yaml)
+            collected+="$file"$'\n'
+            ;;
+        *)
+            dir="$file"
+            for _ in 1 2 3; do
+                dir="$(dirname "$dir")"
+                if [ -f "$dir/kustomization.yaml" ]; then
+                    collected+="$dir/kustomization.yaml"$'\n'
+                    break
+                fi
+            done
+            ;;
+    esac
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$collected" ]; then
+    exit 0
+fi
+
+dirs_to_check=$(echo "$collected" | xargs -n1 dirname | sort -u)
+
+errors=""
+while IFS= read -r dir; do
+    [ -z "$dir" ] && continue
+    if ! output=$(kustomize build "$dir" 2>&1); then
+        errors+="FAIL: kustomize build ${dir}"$'\n'"${output}"$'\n'
+    fi
+done <<< "$dirs_to_check"
+
+if [ -n "$errors" ]; then
+    echo "ERROR: Kustomize validation failed" >&2
+    echo "$errors" >&2
+    echo "To skip: git commit --no-verify" >&2
+    exit 1
+fi

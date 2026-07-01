@@ -13,6 +13,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
@@ -49,9 +51,16 @@ spec:
           name: media-storage
         image: ghcr.io/novog93/beans-and-bites/backend:latest
         imagePullPolicy: Always
+        env:
+        - name: STAGE
+          value: "prod"
         envFrom:
         - secretRef:
             name: db-credentials
+        - secretRef:
+            name: admin-mail-credentials
+        - secretRef:
+            name: backend-credentials
         - configMapRef:
             name: backend-config
         ports:

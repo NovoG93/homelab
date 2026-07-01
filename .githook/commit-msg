@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euo pipefail
+
+msg_file="$1"
+first_line=$(grep -v '^#' "$msg_file" | head -1)
+
+# Allow git-internal and temporary messages
+echo "$first_line" | grep -qE '^(Merge|fixup!|squash!|WIP|wip)' && exit 0
+
+if ! echo "$first_line" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-zA-Z0-9._-]+\))?: .+'; then
+    cat >&2 <<'EOF'
+
+ERROR: Commit message does not follow conventional commit format.
+
+  Expected:  type(optional-scope): description
+  Examples:
+    feat(immich): add storage class
+    fix: correct metallb IP range
+    chore(deps): update immich docker tag to v0.11.1
+
+  Allowed types: feat fix chore docs style refactor perf test build ci revert
+
+  To bypass: git commit --no-verify
+
+EOF
+    exit 1
+fi

@@ -35,7 +35,7 @@ spec:
           mountPath: /var/lib/postgresql/data
         livenessProbe:
           exec:
-            command: ["pg_isready", "-U", "rcl_user", "-d", "rcl_db"]
+            command: ["pg_isready", "-U", "beans_user", "-d", "beans_db"]
           initialDelaySeconds: 10
           periodSeconds: 10
       volumes:

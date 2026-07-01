@@ -3,18 +3,21 @@ kind: Kustomization
 metadata:
   name: kustomization
 
-namespace: b-and-b
+namespace: beans-and-bites
 
 
 resources:
 - config.yaml
-- virtualserver.yaml
+- virtualserver-frontend.yaml
+- virtualserver-backend.yaml
+- virtualserver-api.yaml
 - httproute.yaml
 - backend.yaml
 - frontend.yaml
 - db.yaml
 - registry-secret.yaml
-
+- mtls-cert.yaml
+- mtls-policy.yaml
 
 
 generatorOptions:
