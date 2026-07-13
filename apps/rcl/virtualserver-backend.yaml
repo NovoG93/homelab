@@ -20,8 +20,16 @@ spec:
   - path: =/
     action:
       redirect:
-        url: /admin/
+        url: https://${host}/admin/
         code: 301
   - path: /
     action:
-      pass: robotics-content-lab-backend
+      proxy:
+        upstream: robotics-content-lab-backend
+        requestHeaders:
+          pass: true
+          set:
+          - name: X-SSL-CLIENT-VERIFY
+            value: ""
+          - name: X-SSL-CLIENT-S-DN
+            value: ""

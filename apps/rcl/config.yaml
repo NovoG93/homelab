@@ -27,10 +27,6 @@ spec:
     remoteRef:
       key: apps/rcl/db-credentials
       property: SECRET_KEY
-  - secretKey: MTLS_ALLOWED_CLIENTS
-    remoteRef:
-      key: apps/rcl/db-credentials
-      property: MTLS_ALLOWED_CLIENTS
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -123,3 +119,5 @@ metadata:
 data:
   POSTGRES_HOST: db-service
   POSTGRES_PORT: "5432"
+  MTLS_TRUSTED_PROXY_CIDRS: "10.0.76.6/32"
+  MTLS_CLIENT_USER_MAP: "admin-client:rcl-mcp"

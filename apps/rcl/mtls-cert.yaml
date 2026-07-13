@@ -1,0 +1,57 @@
+---
+# 1. Self-Signed Bootstrap Issuer
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+
+---
+# 2. Root CA Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mtls-root-ca
+spec:
+  isCA: true
+  commonName: rcl-mtls-root-ca
+  # This secret is read by the NGINX mtls-policy
+  secretName: mtls-ca-secret
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+
+---
+# 3. mTLS CA Issuer (Uses the Root CA)
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: mtls-ca-issuer
+spec:
+  ca:
+    secretName: mtls-ca-secret
+
+---
+# 4. Admin Client Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: admin-client-cert
+spec:
+  # Django maps this CN to the scoped rcl-mcp user with MTLS_CLIENT_USER_MAP.
+  commonName: admin-client
+  secretName: admin-client-cert-secret
+  usages:
+    - client auth
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: mtls-ca-issuer
+    kind: Issuer
+    group: cert-manager.io

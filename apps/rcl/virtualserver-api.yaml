@@ -12,6 +12,8 @@ spec:
   host: rcl-api.novotny.live
   tls:
     secret: wildcard-tls
+  policies:
+  - name: mtls-policy
   upstreams:
   - name: robotics-content-lab-api
     service: backend-service
@@ -19,4 +21,12 @@ spec:
   routes:
   - path: /
     action:
-      pass: robotics-content-lab-api
+      proxy:
+        upstream: robotics-content-lab-api
+        requestHeaders:
+          pass: true
+          set:
+          - name: X-SSL-CLIENT-VERIFY
+            value: ${ssl_client_verify}
+          - name: X-SSL-CLIENT-S-DN
+            value: ${ssl_client_s_dn}

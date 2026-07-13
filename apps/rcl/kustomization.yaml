@@ -16,10 +16,18 @@ resources:
 - frontend.yaml
 - db.yaml
 - registry-secret.yaml
+- mtls-cert.yaml
+- mtls-policy.yaml
 
 
 generatorOptions:
   disableNameSuffixHash: true
+
+images:
+- name: ghcr.io/robotics-content-lab/website/backend
+  newTag: staging-20260713-e61f713
+- name: ghcr.io/robotics-content-lab/website/frontend
+  newTag: staging-20260713-e61f713
 
 patches:
 - target:
