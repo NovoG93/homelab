@@ -26,9 +26,9 @@ generatorOptions:
 
 images:
 - name: ghcr.io/robotics-content-lab/website/backend
-  newTag: staging-20260713-e61f713
+  newTag: staging-20260713-ab523c1
 - name: ghcr.io/robotics-content-lab/website/frontend
-  newTag: staging-20260713-e61f713
+  newTag: staging-20260713-ab523c1
 
 patches:
 - target:
