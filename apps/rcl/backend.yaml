@@ -31,19 +31,6 @@ spec:
       - name: media-storage
         persistentVolumeClaim:
           claimName: media-pvc
-      initContainers:
-      - name: init-media
-        image: ghcr.io/robotics-content-lab/website/backend:latest
-        imagePullPolicy: Always
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            echo "Initializing media volume..."
-            cp -rn /app/media/. /app/pvc-media/
-            echo "Media initialization complete."
-        volumeMounts:
-        - mountPath: /app/pvc-media
-          name: media-storage
       containers:
       - name: backend
         volumeMounts:
@@ -70,6 +57,8 @@ spec:
             path: /health/ready/
             port: 8000
             httpHeaders:
+            - name: Host
+              value: rcl-api.novotny.live
             - name: X-Forwarded-Proto
               value: https
           periodSeconds: 5
@@ -80,6 +69,8 @@ spec:
             path: /health/live/
             port: 8000
             httpHeaders:
+            - name: Host
+              value: rcl-api.novotny.live
             - name: X-Forwarded-Proto
               value: https
           periodSeconds: 10
@@ -90,6 +81,8 @@ spec:
             path: /health/ready/
             port: 8000
             httpHeaders:
+            - name: Host
+              value: rcl-api.novotny.live
             - name: X-Forwarded-Proto
               value: https
           periodSeconds: 5
