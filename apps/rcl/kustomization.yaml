@@ -17,6 +17,7 @@ resources:
 - db.yaml
 - registry-secret.yaml
 - mtls-cert.yaml
+- mtls-nginx-ca-secret.yaml
 - mtls-policy.yaml
 
 

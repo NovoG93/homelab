@@ -4,6 +4,6 @@ metadata:
   name: mtls-policy
 spec:
   ingressMTLS:
-    clientCertSecret: mtls-ca-secret
+    clientCertSecret: mtls-nginx-ca-secret
     verifyClient: "optional"
     verifyDepth: 1
