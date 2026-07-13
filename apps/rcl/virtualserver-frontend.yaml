@@ -12,6 +12,8 @@ spec:
   host: robotics-content-lab.novotny.live
   tls:
     secret: wildcard-tls
+    redirect:
+      enable: true
   upstreams:
   - name: robotics-content-lab
     service: robotics-content-lab-service
