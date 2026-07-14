@@ -13,7 +13,6 @@ resources:
 - virtualserver-api.yaml
 - httproute.yaml
 - backend.yaml
-- resource-migration-job.yaml
 - frontend.yaml
 - db.yaml
 - registry-secret.yaml
@@ -27,9 +26,9 @@ generatorOptions:
 
 images:
 - name: ghcr.io/robotics-content-lab/website/backend
-  newTag: staging-20260714-14d8d44
+  newTag: staging-20260713-ab523c1
 - name: ghcr.io/robotics-content-lab/website/frontend
-  newTag: staging-20260714-14d8d44
+  newTag: staging-20260713-ab523c1
 
 patches:
 - target:

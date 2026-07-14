@@ -19,18 +19,6 @@ spec:
     service: robotics-content-lab-service
     port: 80
   routes:
-  - path: =/media/resources
-    action:
-      return:
-        code: 404
-        type: text/plain
-        body: Not found
-  - path: /media/resources/
-    action:
-      return:
-        code: 404
-        type: text/plain
-        body: Not found
   - path: /
     action:
       pass: robotics-content-lab

@@ -73,6 +73,11 @@ spec:
           httpGet:
             path: /health/ready/
             port: 8000
+            httpHeaders:
+            - name: Host
+              value: rcl-api.novotny.live
+            - name: X-Forwarded-Proto
+              value: https
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 60
@@ -80,6 +85,11 @@ spec:
           httpGet:
             path: /health/live/
             port: 8000
+            httpHeaders:
+            - name: Host
+              value: rcl-api.novotny.live
+            - name: X-Forwarded-Proto
+              value: https
           periodSeconds: 10
           timeoutSeconds: 3
           failureThreshold: 3
@@ -87,6 +97,11 @@ spec:
           httpGet:
             path: /health/ready/
             port: 8000
+            httpHeaders:
+            - name: Host
+              value: rcl-api.novotny.live
+            - name: X-Forwarded-Proto
+              value: https
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3

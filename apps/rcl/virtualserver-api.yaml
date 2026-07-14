@@ -12,8 +12,6 @@ spec:
   host: rcl-api.novotny.live
   tls:
     secret: wildcard-tls
-    redirect:
-      enable: true
   policies:
   - name: mtls-policy
   upstreams:
@@ -21,18 +19,6 @@ spec:
     service: backend-service
     port: 8000
   routes:
-  - path: =/media/resources
-    action:
-      return:
-        code: 404
-        type: text/plain
-        body: Not found
-  - path: /media/resources/
-    action:
-      return:
-        code: 404
-        type: text/plain
-        body: Not found
   - path: /
     action:
       proxy:

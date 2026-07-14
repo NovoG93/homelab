@@ -12,25 +12,11 @@ spec:
   host: robotics-content-lab-backend.novotny.live
   tls:
     secret: wildcard-tls
-    redirect:
-      enable: true
   upstreams:
   - name: robotics-content-lab-backend
     service: backend-service
     port: 8000
   routes:
-  - path: =/media/resources
-    action:
-      return:
-        code: 404
-        type: text/plain
-        body: Not found
-  - path: /media/resources/
-    action:
-      return:
-        code: 404
-        type: text/plain
-        body: Not found
   - path: =/
     action:
       redirect:
