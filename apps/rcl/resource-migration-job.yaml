@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate-private-resources
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: migrate-private-resources
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+      - name: ghcr-registry
+      tolerations:
+      - key: apps
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: apps
+                operator: Exists
+      volumes:
+      - name: media-storage
+        persistentVolumeClaim:
+          claimName: media-pvc
+      - name: private-resource-storage
+        persistentVolumeClaim:
+          claimName: resource-pvc
+      containers:
+      - name: migrate-private-resources
+        image: ghcr.io/robotics-content-lab/website/backend:latest
+        imagePullPolicy: Always
+        args:
+        - python
+        - manage.py
+        - migrate_resource_files
+        env:
+        - name: STAGE
+          value: "prod"
+        envFrom:
+        - secretRef:
+            name: db-credentials
+        - secretRef:
+            name: admin-mail-credentials
+        - secretRef:
+            name: backend-credentials
+        - configMapRef:
+            name: backend-config
+        volumeMounts:
+        - mountPath: /app/media
+          name: media-storage
+        - mountPath: /app/private_resources
+          name: private-resource-storage
