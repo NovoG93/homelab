@@ -13,6 +13,7 @@ resources:
 - virtualserver-api.yaml
 - httproute.yaml
 - backend.yaml
+- email-outbox-cronjob.yaml
 - resource-migration-job.yaml
 - frontend.yaml
 - db.yaml
@@ -27,9 +28,9 @@ generatorOptions:
 
 images:
 - name: ghcr.io/robotics-content-lab/website/backend
-  newTag: staging-20260714-14d8d44
+  newTag: staging-20260718-c390c0c
 - name: ghcr.io/robotics-content-lab/website/frontend
-  newTag: staging-20260714-14d8d44
+  newTag: staging-20260718-c390c0c
 
 patches:
 - target:

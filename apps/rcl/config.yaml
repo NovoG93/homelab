@@ -117,6 +117,7 @@ kind: ConfigMap
 metadata:
   name: backend-config
 data:
+  EMAIL_TIMEOUT: "15"
   POSTGRES_HOST: db-service
   POSTGRES_PORT: "5432"
   MTLS_TRUSTED_PROXY_CIDRS: "10.0.76.6/32"

@@ -45,6 +45,8 @@ spec:
         env:
         - name: STAGE
           value: "prod"
+        - name: RUN_SEED_DATA
+          value: "false"
         envFrom:
         - secretRef:
             name: db-credentials

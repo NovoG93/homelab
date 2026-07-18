@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: email-outbox
+spec:
+  schedule: "* * * * *"
+  suspend: true
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: email-outbox
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+          - name: ghcr-registry
+          tolerations:
+          - key: apps
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: apps
+                    operator: Exists
+          containers:
+          - name: email-outbox
+            image: ghcr.io/robotics-content-lab/website/backend:latest
+            imagePullPolicy: Always
+            args:
+            - python
+            - manage.py
+            - process_outbox
+            env:
+            - name: STAGE
+              value: "prod"
+            - name: RUN_SEED_DATA
+              value: "false"
+            envFrom:
+            - secretRef:
+                name: db-credentials
+            - secretRef:
+                name: admin-mail-credentials
+            - secretRef:
+                name: backend-credentials
+            - configMapRef:
+                name: backend-config
