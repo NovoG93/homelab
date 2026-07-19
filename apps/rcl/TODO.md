@@ -23,3 +23,13 @@ Migrate the mTLS Certificate Authority to **HashiCorp Vault PKI** to keep the ro
 ## Trusted proxy address
 
 `MTLS_TRUSTED_PROXY_CIDRS` currently pins the NGINX Ingress controller pod IP as a `/32`. This fails closed if that pod is replaced. Update the value after a controller rollout, or replace the address-based trust with a stable, independently authenticated proxy boundary before production.
+
+## Completed: staging email-outbox qualification
+
+- Application release `staging-20260718-46147ef` is live with backend digest `ca9bbdd7` and frontend digest `d1bb115d`.
+- The cached post-cover race and missing-author spinner were fixed and verified through Chrome DevTools using cached SPA navigation, hard reload, back/forward, and mobile rendering.
+- The scheduled `email-outbox` worker is enabled with `concurrencyPolicy: Forbid` and `startingDeadlineSeconds: 60`.
+- Manual and scheduled no-work runs completed with `0 sent, 0 requeued, 0 failed`; the MailLog baseline remains 64 `SENT` rows.
+- Public health, missing/forged/mapped mTLS, SMTP, Kubernetes security, and MCP checks passed with fixtures cleaned.
+- Homelab rollout revisions: images `35a9afe`, schedule enablement `a9df5b6`, missed-run safeguard `0df702e`.
+- Roll back by disabling the CronJob first, then restore both images to `staging-20260718-c390c0c` (homelab revision `4147906`).
