@@ -28,9 +28,9 @@ generatorOptions:
 
 images:
 - name: ghcr.io/robotics-content-lab/website/backend
-  digest: sha256:16ee9f4095837c25be0cfab53288eb3c6c6296b84a6e8d1a219e7167ab89c160
+  digest: sha256:d166c5db496ae04f0d90b31dba35798a16de2e30b5189962447f268f67f0d004
 - name: ghcr.io/robotics-content-lab/website/frontend
-  digest: sha256:d0bdc808d02289297fbff0e787d61d16579242ce2d51157ec81dfaa237b92255
+  digest: sha256:bbd1c83f6996de04809a7970c56be7ee6af5cbc124f4314b315c842f0f2730cd
 
 patches:
 - target:
