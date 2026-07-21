@@ -117,6 +117,7 @@ kind: ConfigMap
 metadata:
   name: backend-config
 data:
+  APP_ENVIRONMENT: staging
   EMAIL_TIMEOUT: "15"
   POSTGRES_HOST: db-service
   POSTGRES_PORT: "5432"
