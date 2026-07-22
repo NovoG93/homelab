@@ -1,0 +1,21 @@
+apiVersion: externaldns.nginx.org/v1
+kind: DNSEndpoint
+metadata:
+  name: lxc-service-stack
+spec:
+  endpoints:
+  - dnsName: pihole-global.novotny.live
+    recordType: A
+    recordTTL: 300
+    targets:
+    - 192.168.0.154
+  - dnsName: mcpjungle.novotny.live
+    recordType: A
+    recordTTL: 300
+    targets:
+    - 192.168.0.154
+  - dnsName: agent-vault.novotny.live
+    recordType: A
+    recordTTL: 300
+    targets:
+    - 192.168.0.154

@@ -194,7 +194,7 @@ run_register_cluster() {
 startup_cluster() {
 	local host_ip
 
-	echo "CHecking if kind cluster '${CLUSTER_NAME}' is already running..."
+	echo "Checking if kind cluster '${CLUSTER_NAME}' is already running..."
 	if check_running; then
 		echo "Cluster '${CLUSTER_NAME}' is already running, skipping startup"
 		return

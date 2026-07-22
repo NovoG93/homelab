@@ -5,6 +5,7 @@ metadata:
 
 resources:
 - es-pihole-password.yaml
+- records
 
 helmGlobals:
   chartHome: ../../helmCharts/

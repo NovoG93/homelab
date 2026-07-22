@@ -1,0 +1,261 @@
+name: Helm upgrade test
+
+on:
+    pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/**"
+      - "core/**"
+      - "tools/**"
+      - "kind/**"
+      - "renovate.json"
+      - ".github/workflows/helm-upgrade-test.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helm-upgrade-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    name: Render and validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install tools
+        shell: bash
+        run: |
+          bash hack/tasks/install-tools.bash
+
+      - name: Render every Kustomization
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p manifests
+
+          while IFS= read -r file; do
+            directory="$(dirname "$file")"
+            output="manifests/$(echo "$directory" | tr '/' '_').yaml"
+
+            echo "::group::Rendering ${directory}"
+            kustomize build --enable-helm "$directory" > "$output"
+            echo "::endgroup::"
+          done < <(
+            find apps core tools kind \
+              -type f \
+              \( -name kustomization.yaml -o -name Kustomization \) \
+              -print |
+            sort
+          )
+
+      - name: Validate Kubernetes schemas
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubeconform \
+            -strict \
+            -summary \
+            -ignore-missing-schemas \
+            manifests/
+
+      - name: Upload rendered manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: manifests/
+          retention-days: 7
+
+  kind:
+    name: Deploy into kind
+    needs: render
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        shell: bash
+        run: |
+          bash hack/tasks/install-tools.bash
+
+      - name: Create kind cluster
+        shell: bash
+        run: |
+          bash hack/ci/deploy-kind.bash --cluster-name homelab-ci
+
+      - name: Determine changed application directories
+        id: changes
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" |
+            awk -F/ '
+              $1 == "apps" || $1 == "core" || $1 == "tools" {
+                if (NF >= 2) {
+                  print $1 "/" $2
+                }
+              }
+            ' |
+            sort -u |
+            tee /tmp/changed-directories.txt
+
+          {
+            echo "directories<<EOF"
+            cat /tmp/changed-directories.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Server-side validate changed applications
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! -s /tmp/changed-directories.txt ]]; then
+            echo "No application directories changed."
+            exit 0
+          fi
+
+          while IFS= read -r directory; do
+            [[ -f "${directory}/kustomization.yaml" ]] || continue
+
+            echo "::group::Server-side validation: ${directory}"
+
+            kustomize build --enable-helm "$directory" |
+              kubectl apply \
+                --server-side \
+                --dry-run=server \
+                --validate=true \
+                -f -
+
+            echo "::endgroup::"
+          done < /tmp/changed-directories.txt
+
+      - name: Deploy changed applications
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r directory; do
+            [[ -f "${directory}/kustomization.yaml" ]] || continue
+
+            echo "::group::Deploying ${directory}"
+
+            kustomize build --enable-helm "$directory" |
+              kubectl apply --server-side -f -
+
+            echo "::endgroup::"
+          done < /tmp/changed-directories.txt
+
+      - name: Wait for workloads
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Give controllers time to create dependent workloads.
+          sleep 10
+
+          failed=0
+
+          while IFS= read -r item; do
+            kind="${item%%/*}"
+            rest="${item#*/}"
+            namespace="${rest%%/*}"
+            name="${rest#*/}"
+
+            case "$kind" in
+              deployment)
+                kubectl rollout status \
+                  "deployment/${name}" \
+                  -n "$namespace" \
+                  --timeout=5m || failed=1
+                ;;
+              statefulset)
+                kubectl rollout status \
+                  "statefulset/${name}" \
+                  -n "$namespace" \
+                  --timeout=5m || failed=1
+                ;;
+              daemonset)
+                kubectl rollout status \
+                  "daemonset/${name}" \
+                  -n "$namespace" \
+                  --timeout=5m || failed=1
+                ;;
+            esac
+          done < <(
+            kubectl get deployments,statefulsets,daemonsets \
+              --all-namespaces \
+              -o json |
+            jq -r '
+              .items[] |
+              "\(.kind | ascii_downcase)/\(.metadata.namespace)/\(.metadata.name)"
+            '
+          )
+
+          exit "$failed"
+
+      - name: Detect unhealthy pods
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubectl get pods --all-namespaces -o wide
+
+          unhealthy="$(
+            kubectl get pods --all-namespaces -o json |
+              jq -r '
+                .items[]
+                | select(
+                    .status.phase == "Failed"
+                    or (
+                      .status.containerStatuses // []
+                      | any(
+                          .state.waiting.reason
+                          | IN(
+                              "CrashLoopBackOff",
+                              "CreateContainerConfigError",
+                              "ErrImagePull",
+                              "ImagePullBackOff",
+                              "InvalidImageName"
+                            )
+                        )
+                    )
+                  )
+                | "\(.metadata.namespace)/\(.metadata.name)"
+              '
+          )"
+
+          if [[ -n "$unhealthy" ]]; then
+            echo "Unhealthy pods:"
+            echo "$unhealthy"
+            exit 1
+          fi
+
+      - name: Collect diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          kubectl get all --all-namespaces -o wide || true
+          kubectl get events --all-namespaces \
+            --sort-by=.metadata.creationTimestamp || true
+          kubectl describe pods --all-namespaces || true
+
+      - name: Delete kind cluster
+        if: always()
+        run: kind delete cluster --name homelab-ci
