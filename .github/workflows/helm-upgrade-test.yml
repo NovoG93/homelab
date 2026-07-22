@@ -1,9 +1,8 @@
 name: Helm upgrade test
 
-on:
-    pull_request:
-    branches:
-      - main
+'on':
+  pull_request:
+    branches: [ "main" ]
     paths:
       - "apps/**"
       - "core/**"
@@ -11,6 +10,7 @@ on:
       - "kind/**"
       - "renovate.json"
       - ".github/workflows/helm-upgrade-test.yml"
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Install tools
         shell: bash
