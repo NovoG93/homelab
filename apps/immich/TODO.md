@@ -1,0 +1,1 @@
+- [ ] use https://github.com/immichFrame/ImmichFrame_Android/releases on tablet to view images and videos as digital picture frame

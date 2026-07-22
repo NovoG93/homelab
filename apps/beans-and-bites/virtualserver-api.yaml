@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: beans-and-bites-api
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "bnb-api.novotny.live"
+  labels:
+    funnel: "false"
+spec:
+  externalDNS:
+    enable: true
+  host: bnb-api.novotny.live
+  tls:
+    secret: wildcard-tls
+  upstreams:
+  - name: beans-and-bites-api
+    service: backend-service
+    port: 8000
+  routes:
+  - path: /
+    action:
+      pass: beans-and-bites-api
