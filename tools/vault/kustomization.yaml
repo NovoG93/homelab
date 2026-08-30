@@ -24,7 +24,7 @@ helmCharts:
 - includeCRDs: true
   name: vault
   repo: https://helm.releases.hashicorp.com
-  version: 0.30.0
+  version: 0.34.1
   releaseName: vault
   namespace: vault
   valuesFile: values.yaml
