@@ -15,7 +15,7 @@ helmCharts:
 - includeCRDs: true
   name: ntfy
   repo: oci://oci.trueforge.org/truecharts
-  version: 13.13.0
+  version: 13.18.0
   releaseName: ntfy
   namespace: ntfy
   valuesFile: values.yaml
