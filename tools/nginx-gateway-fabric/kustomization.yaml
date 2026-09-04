@@ -19,7 +19,7 @@ helmCharts:
 - includeCRDs: true
   name: nginx-gateway-fabric
   repo: oci://ghcr.io/nginx/charts
-  version: 2.4.1
+  version: 2.7.0
   releaseName: nginx-gateway-fabric
   namespace: nginx-gateway
   valuesFile: values.yaml
