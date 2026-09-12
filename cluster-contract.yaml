@@ -1,0 +1,75 @@
+# Interface between NovoG93/homelab (producer: everything that runs in the
+# cluster) and NovoG93/homelab-infra (consumer: the cluster itself).
+# homelab-infra asserts apiVersion before it reads anything else; bump the major
+# version for any change that is not backward compatible.
+apiVersion: homelab.novotny.live/v1
+kind: ClusterContract
+metadata:
+  name: homelab
+spec:
+  repo: https://github.com/NovoG93/homelab
+  # A public repository is part of the contract: homelab-infra bootstraps
+  # without any repository credential.
+  visibility: public
+  # What Argo CD pulls. Floating today; pin before any production cut over.
+  revisionChannel: main
+  bootstrap:
+    # kustomize root, buildable with `kubectl kustomize --enable-helm`.
+    path: tools/argocd
+    namespace: argocd
+    applicationSets:
+      - apps-appset
+      - tools-appset
+      - core-appset
+    # Kinds whose CRDs do not exist on a fresh cluster: filtered out of the
+    # one-shot bootstrap payload, re-applied later by the `argocd` Application.
+    deferredKinds:
+      - ExternalSecret
+      - HTTPRoute
+      - VirtualServer
+    requiresControllerTools:
+      - kubectl
+      - helm
+      - yq
+  kubernetes:
+    minorVersion: "1.36"
+    apiGroups:
+      - gateway.networking.k8s.io/v1
+      - k8s.nginx.org/v1
+      - external-secrets.io/v1
+  # Node labels/taints this repository's charts schedule by. homelab-infra
+  # guarantees they exist; every chart using one must declare the toleration.
+  nodeRoles:
+    - label: tools
+      taint: tools
+    - label: apps
+      taint: apps
+  secrets:
+    # Authoritative ClusterSecretStore for every ExternalSecret in this repo.
+    store: vault-dev
+    unusedStores:
+      - vault-prod
+    requiredKeys:
+      - cert-manager/api-token
+      - external-dns/pihole-password
+    # Nothing must pre-exist in the cluster for the bootstrap to succeed.
+    bootstrapSecrets: none
+  endpoints:
+    domain: novotny.live
+    gatewayRef:
+      name: homelab-gateway
+      namespace: nginx-gateway
+    tlsSecret: wildcard-tls
+  handover:
+    # Present = Argo CD owns the cluster and homelab-infra stops applying
+    # in-cluster manifests (except a deliberate re-bootstrap).
+    marker: applicationset/apps-appset
+    # Tool Applications to sync, in dependency order, after the bootstrap.
+    toolSyncOrder:
+      - external-secret-operator
+      - vault
+      - cert-manager
+      - kyverno
+      - nginx-ingress
+      - nginx-gateway-fabric
+      - external-dns
