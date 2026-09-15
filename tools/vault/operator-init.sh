@@ -46,7 +46,9 @@ init() {
         NAMESPACE="vault"
         POD_NAME="$(kubectl get po -n ${NAMESPACE} --selector=app.kubernetes.io/name=vault,app.kubernetes.io/instance=vault,component=server -ojsonpath='{.items[0].metadata.name}' 2>/dev/null)"
         if [ -n "$POD_NAME" ]; then
-            PREFIX="kubectl -n ${NAMESPACE} exec ${POD_NAME} --"
+            # Keep stdin attached so a local restore file can be streamed to
+            # `vault kv put` without exposing secret values as CLI arguments.
+            PREFIX="kubectl -n ${NAMESPACE} exec -i ${POD_NAME} --"
             # Outside the pod: store/read keys from the repo folder
             KEYS_PATH="${KEYS_PATH:-$PWD/keys.json}"
         fi
@@ -148,6 +150,117 @@ ensure_secret_engine() {
         return
     fi
     ${PREFIX} env VAULT_TOKEN="${ROOT_TOKEN}" vault secrets enable -path="${path}" -version=2 kv
+}
+
+# Locate one Vault recovery export. VAULT_IMPORT_FILE takes precedence; otherwise
+# inspect the locations used when this script runs locally or as a pod postStart.
+find_vault_import_file() {
+    if [ -n "${VAULT_IMPORT_FILE:-}" ]; then
+        if [ ! -f "$VAULT_IMPORT_FILE" ]; then
+            echo "VAULT_IMPORT_FILE does not exist: ${VAULT_IMPORT_FILE}" >&2
+            return 1
+        fi
+        printf '%s\n' "$VAULT_IMPORT_FILE"
+        return
+    fi
+
+    script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+    found=""
+    for directory in "$script_dir" "$PWD" /tmp/keys /tmp; do
+        [ -d "$directory" ] || continue
+        for candidate in "$directory"/*.json; do
+            [ -f "$candidate" ] || continue
+            candidate_dir=$(CDPATH='' cd -- "$(dirname -- "$candidate")" && pwd)
+            candidate="${candidate_dir}/$(basename -- "$candidate")"
+            [ "$candidate" = "$found" ] && continue
+
+            if ! command -v jq >/dev/null 2>&1; then
+                echo "Found Vault import file ${candidate}, but jq is required to restore it." >&2
+                return 1
+            fi
+            if ! jq -e '.engines | type == "object"' "$candidate" >/dev/null 2>&1; then
+                continue
+            fi
+            if [ -n "$found" ]; then
+                echo "Multiple Vault import files found (${found}, ${candidate}); set VAULT_IMPORT_FILE explicitly." >&2
+                return 1
+            fi
+            found="$candidate"
+        done
+    done
+
+    printf '%s\n' "$found"
+}
+
+# Restore the newest recoverable version of every KV-v2 secret in an export.
+# The recovery export retains full history, while bootstrap restores its merged
+# current state. Existing values are compared first to keep repeated runs idempotent.
+restore_vault_import() {
+    import_file="$1"
+    [ -n "$import_file" ] || return 0
+
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "jq is required to restore ${import_file}." >&2
+        return 1
+    fi
+
+    echo "Restoring Vault secrets from ${import_file}..." >&2
+
+    desired_file=""
+    current_file=""
+    trap 'rm -f "${desired_file:-}" "${current_file:-}"' EXIT HUP INT TERM
+
+    jq -r '.engines | to_entries[] | select(.value.type == "kv-v2") | .key' "$import_file" |
+    while IFS= read -r engine; do
+        engine=${engine%/}
+        [ -n "$engine" ] || continue
+        # Local mode uses `kubectl exec -i`; prevent it from consuming the
+        # remaining engine names from this loop's stdin.
+        ensure_secret_engine "$engine" </dev/null
+    done
+
+    jq -r '
+        .engines | to_entries[] |
+        select(.value.type == "kv-v2") |
+        .key as $engine |
+        .value.secrets | keys[] |
+        [$engine, .] | @tsv
+    ' "$import_file" |
+    while IFS="$(printf '\t')" read -r engine secret_path; do
+        engine=${engine%/}
+        [ -n "$engine" ] && [ -n "$secret_path" ] || continue
+
+        desired_file=$(mktemp)
+        current_file=$(mktemp)
+        chmod 600 "$desired_file" "$current_file"
+
+        jq -cSe --arg engine "${engine}/" --arg path "$secret_path" '
+            .engines[$engine].secrets[$path].versions
+            | to_entries
+            | map(select(.value.unavailable != true and .value.data != null))
+            | sort_by(.key | tonumber)
+            | last.value.data
+            | select(type == "object")
+        ' "$import_file" > "$desired_file"
+
+        if ${PREFIX} env VAULT_TOKEN="${ROOT_TOKEN}" vault kv get \
+            -format=json -mount="$engine" "$secret_path" </dev/null 2>/dev/null |
+            jq -cS '.data.data' > "$current_file" 2>/dev/null &&
+            cmp -s "$desired_file" "$current_file"; then
+            echo "Vault secret unchanged: ${engine}/${secret_path}" >&2
+        else
+            ${PREFIX} env VAULT_TOKEN="${ROOT_TOKEN}" vault kv put \
+                -mount="$engine" "$secret_path" @/dev/stdin \
+                < "$desired_file" >/dev/null
+            echo "Restored Vault secret: ${engine}/${secret_path}" >&2
+        fi
+
+        rm -f "$desired_file" "$current_file"
+        desired_file=""
+        current_file=""
+    done
+
+    echo "Vault secret restore completed from ${import_file}." >&2
 }
 
 # Create an 'admins' policy with broad permissions (always overwrite to ensure correctness)
@@ -281,6 +394,9 @@ if [ -n "$ROOT_TOKEN" ]; then
     ensure_secret_engine dev
     echo "Creating prod secret-engine..."
     ensure_secret_engine prod
+
+    VAULT_IMPORT_FILE_RESOLVED="$(find_vault_import_file)"
+    restore_vault_import "$VAULT_IMPORT_FILE_RESOLVED"
 
     echo "Creating admins policy..."
     ensure_admins_policy
