@@ -13,7 +13,13 @@ serviceDns:
   type: LoadBalancer
 
   # -- A fixed `spec.loadBalancerIP` for the DNS Service
-  loadBalancerIP: "192.168.0.211"
+  # Must be a free address in MetalLB's homelab-pool. 192.168.0.210 belongs to
+  # nginx-ingress and 192.168.0.211 to the homelab-gateway (pinned there under
+  # `nginx.service.loadBalancerIP`, and the address the published
+  # *-gateway.novotny.live records resolve to), so the DNS VIP takes .212. The
+  # LXC Pi-hole forwards /novotny.live/ to whatever is set here, so the two repos
+  # must agree (homelab-infra, roles/pihole/templates/05-homelab.conf.j2).
+  loadBalancerIP: "192.168.0.212"
   
   externalTrafficPolicy: Cluster 
   

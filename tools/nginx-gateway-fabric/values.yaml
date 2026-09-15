@@ -1,12 +1,13 @@
 nginxGateway:
   gatewayClassName: nginx
-  
-  # Configure the service to expose the Gateway
+
+  # The Gateway's LoadBalancer address does NOT come from here: this template is
+  # always a ClusterIP and ignores `type`/`loadBalancerIP` (chart 2.4.1,
+  # templates/service.yaml reads only its `labels`/`annotations`). The data-plane
+  # Service that actually carries the Gateway address is rendered by the
+  # controller from the NginxProxy CR — see `nginx.service.loadBalancerIP` below.
   service:
     create: true
-    type: LoadBalancer
-    # Using .212 to utilize the next available IP in your MetalLB pool
-    loadBalancerIP: "192.168.0.212" 
     annotations:
       metallb.universe.tf/allow-shared-ip: "nginx-gateway"
 
@@ -26,6 +27,12 @@ nginxGateway:
                   - "true"
 
 nginx:
+  # Where the Gateway's LoadBalancer address is actually pinned. The published
+  # *-gateway.novotny.live records resolve to this address, so it must not move:
+  # 192.168.0.210 belongs to nginx-ingress and 192.168.0.212 is the in-cluster
+  # Pi-hole's DNS VIP (the address the LXC Pi-hole forwards /novotny.live/ to).
+  service:
+    loadBalancerIP: "192.168.0.211"
   container:
     resources:
       requests:

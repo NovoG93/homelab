@@ -2,7 +2,12 @@
 # cluster) and NovoG93/homelab-infra (consumer: the cluster itself).
 # homelab-infra asserts apiVersion before it reads anything else; bump the major
 # version for any change that is not backward compatible.
-apiVersion: homelab.novotny.live/v1
+#
+# v2 replaced spec.handover.toolSyncOrder with the phased spec.handover.adoptionOrder.
+# The flat field was removed rather than kept alongside, so a consumer that still
+# reads it must fail loudly on the version assert instead of silently adopting
+# nothing.
+apiVersion: homelab.novotny.live/v2
 kind: ClusterContract
 metadata:
   name: homelab
@@ -64,12 +69,44 @@ spec:
     # Present = Argo CD owns the cluster and homelab-infra stops applying
     # in-cluster manifests (except a deliberate re-bootstrap).
     marker: applicationset/apps-appset
-    # Tool Applications to sync, in dependency order, after the bootstrap.
-    toolSyncOrder:
-      - external-secret-operator
-      - vault
-      - cert-manager
-      - kyverno
-      - nginx-ingress
-      - nginx-gateway-fabric
-      - external-dns
+    # What the consumer adopts before Argo takes over the sync, in phase order:
+    # the platform the cluster must own itself (core/) first, then the tools/
+    # layer that runs on it. homelab-infra syncs each phase twice — once
+    # tolerating applications whose CRDs a sibling in the phase still installs,
+    # then enforcing — and stops touching these Applications afterwards; from
+    # then on Argo CD syncs them on their own ApplicationSet policies.
+    #
+    # calico is deliberately absent: the CNI has to exist before a node can go
+    # Ready, so homelab-infra installs it from its own `kubernetes-cni` stage
+    # rather than as part of this order. Its core/ Application mirrors that
+    # install and therefore reports OutOfSync drift (ownership note in
+    # homelab-infra kubernetes/README.md).
+    adoptionOrder:
+      - phase: core
+        applications:
+          # LoadBalancer addresses and the metrics API: the tools/ apps that ask
+          # for a Service of type LoadBalancer (nginx-ingress,
+          # nginx-gateway-fabric, pihole) depend on these two, so they are
+          # adopted before any tool.
+          - metallb
+          - metrics-server
+      - phase: tools
+        applications:
+          # Storage first: vault (and most stateful tools) stay Pending without
+          # the nfs-client StorageClass this provides.
+          - nfs-provisioner
+          - external-secret-operator
+          - vault
+          - cert-manager
+          - kyverno
+          - nginx-ingress
+          - nginx-gateway-fabric
+          # The in-cluster Pi-hole answers the hostnames external-dns publishes
+          # from HTTPRoute sources *and* runs the admin API external-dns writes
+          # them through (EXTERNAL_DNS_PIHOLE_SERVER is the pihole-web Service),
+          # so it must exist first — observed without it: the external-dns pod
+          # CrashLoops on `lookup pihole-web.pihole.svc.cluster.local: no such
+          # host`. LAN clients reach the published names through the LXC
+          # Pi-hole, which forwards this domain to the in-cluster one.
+          - pihole
+          - external-dns
