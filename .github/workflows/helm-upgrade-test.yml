@@ -114,7 +114,7 @@ jobs:
       - name: Create kind cluster
         shell: bash
         run: |
-          bash hack/ci/deploy-kind.bash --cluster-name homelab-ci
+          bash hack/ci/deploy-kind.bash --cluster-name homelab-ci --skip-initial-deploy
 
       - name: Determine changed application directories
         id: changes

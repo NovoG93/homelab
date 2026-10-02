@@ -249,6 +249,7 @@ validate_custom_resources "${kind_json}" kind
 
 workflow="${repo_dir}/.github/workflows/helm-upgrade-test.yml"
 directory_mapper="${repo_dir}/hack/ci/changed-application-directories.bash"
+lifecycle="${repo_dir}/kind/hack/lifecycle.bash"
 [[ -x "${directory_mapper}" ]] || fail 'the changed-application directory mapper must be executable'
 mapped_directories="$({
   printf '%s\n' \
@@ -268,6 +269,24 @@ native_directories="$({
   fail "the native changed-directory mapper returned unexpected directories: ${native_directories}"
 grep -F 'changed-application-directories.bash --native' "${workflow}" >/dev/null || \
   fail 'the render job must validate only the native Kustomizations changed by the pull request'
+grep -F 'deploy-kind.bash --cluster-name homelab-ci --skip-initial-deploy' "${workflow}" >/dev/null || \
+  fail 'the focused Kind gate must create a clean cluster without bootstrapping unrelated overlays'
+grep -F -- '--skip-initial-deploy)' "${lifecycle}" >/dev/null || \
+  fail 'the Kind lifecycle must support cluster creation without the full initial deployment'
+mkdir -p "${tmp_dir}/fake-kind-bin"
+cat >"${tmp_dir}/fake-kind-bin/kind" <<'EOF'
+#!/usr/bin/env bash
+if [[ "${1:-}" == get && "${2:-}" == clusters ]]; then
+  printf '%s\n' validation-probe
+  exit 0
+fi
+exit 1
+EOF
+chmod +x "${tmp_dir}/fake-kind-bin/kind"
+if PATH="${tmp_dir}/fake-kind-bin:${PATH}" bash "${lifecycle}" startup \
+  --cluster-name validation-probe --skip-initial-deploy --sync-mode invalid >/dev/null 2>&1; then
+  fail 'cluster-only startup must reject an invalid sync mode before checking cluster state'
+fi
 # This is a literal workflow source assertion.
 # shellcheck disable=SC2016
 if [[ "$(grep -F -c 'kustomize build "${build_args[@]}" "$directory"' "${workflow}")" -lt 2 ]]; then
