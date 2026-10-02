@@ -1,0 +1,149 @@
+# kube-prometheus-stack 91.8.2 / Prometheus Operator v0.94.1.
+# The chart package does not ship values.schema.json; keys below are from the
+# exact chart and dependency values inspected for this release.
+
+crds:
+  enabled: true
+
+defaultRules:
+  create: true
+
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: false
+
+prometheusOperator:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  nodeSelector:
+    tools: "true"
+  tolerations:
+    - key: tools
+      operator: Exists
+      effect: NoSchedule
+  serviceMonitor:
+    selfMonitor: true
+  admissionWebhooks:
+    patch:
+      enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 50m
+          memory: 64Mi
+      nodeSelector:
+        tools: "true"
+      tolerations:
+        - key: tools
+          operator: Exists
+          effect: NoSchedule
+
+prometheus:
+  enabled: true
+  serviceMonitor:
+    selfMonitor: true
+  prometheusSpec:
+    replicas: 1
+    retention: 6h
+    walCompression: true
+    externalLabels:
+      cluster: homelab
+    remoteWrite:
+      - url: http://192.168.0.157:8428/api/v1/write
+        queueConfig:
+          capacity: 2500
+          maxShards: 2
+          minShards: 1
+          maxSamplesPerSend: 500
+          batchSendDeadline: 5s
+          minBackoff: 30ms
+          maxBackoff: 5s
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
+    nodeSelector:
+      tools: "true"
+    tolerations:
+      - key: tools
+        operator: Exists
+        effect: NoSchedule
+    serviceMonitorSelector: {}
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelector: {}
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorNamespaceSelector: {}
+
+kubeStateMetrics:
+  enabled: true
+
+kube-state-metrics:
+  releaseLabel: true
+  prometheus:
+    monitor:
+      enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 150m
+      memory: 192Mi
+  nodeSelector:
+    tools: "true"
+  tolerations:
+    - key: tools
+      operator: Exists
+      effect: NoSchedule
+
+nodeExporter:
+  enabled: true
+  operatingSystems:
+    linux:
+      enabled: true
+    aix:
+      enabled: false
+    darwin:
+      enabled: false
+
+prometheus-node-exporter:
+  releaseLabel: true
+  prometheus:
+    monitor:
+      enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  nodeSelector:
+    kubernetes.io/os: linux
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+    - key: tools
+      operator: Exists
+      effect: NoSchedule
+    - key: apps
+      operator: Exists
+      effect: NoSchedule

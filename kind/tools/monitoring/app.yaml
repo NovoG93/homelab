@@ -1,0 +1,4 @@
+name: monitoring-kind
+path: kind/tools/monitoring
+namespace: monitoring
+project: default

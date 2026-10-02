@@ -1,0 +1,42 @@
+# Kind-only overrides. The first values file is the production baseline;
+# these values remove production remote-write and scheduling/resource coupling.
+
+prometheus:
+  prometheusSpec:
+    externalLabels:
+      cluster: kind
+    remoteWrite: []
+    resources: null
+    nodeSelector: null
+    tolerations: []
+
+prometheusOperator:
+  resources: null
+  nodeSelector: null
+  tolerations: []
+  admissionWebhooks:
+    patch:
+      resources: null
+      nodeSelector: null
+      tolerations: []
+
+kube-state-metrics:
+  resources: null
+  nodeSelector: null
+  tolerations: []
+
+prometheus-node-exporter:
+  resources: null
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+    - key: tools
+      operator: Exists
+      effect: NoSchedule
+    - key: apps
+      operator: Exists
+      effect: NoSchedule
