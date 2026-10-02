@@ -20,6 +20,7 @@ CLUSTER_NAME="${DEFAULT_CLUSTER_NAME}"
 INITIAL_CONTEXT="${DEFAULT_INITIAL_CONTEXT}"
 SYNC_MODE="local"
 HOST_IP_OVERRIDE=""
+SKIP_INITIAL_DEPLOY="false"
 
 usage() {
 	cat <<'EOF'
@@ -40,6 +41,7 @@ Options:
 	--context <name>              Initial kubectl context (default: homelab)
 	--sync-mode <local|prod>      Sync mode (default: local)
 	--host-ip <ip>                Override host IP used in cluster/register templates
+	--skip-initial-deploy         Create the cluster without applying app/core/tools overlays
 	-p, --prod-sync               Shortcut for --sync-mode prod
 	-h, --help                    Show help
 
@@ -149,6 +151,16 @@ ensure_resource_absent() {
 	fi
 }
 
+validate_sync_mode() {
+	case "${SYNC_MODE}" in
+		local|prod) ;;
+		*)
+			echo "ERROR: Invalid sync mode '${SYNC_MODE}'. Expected 'local' or 'prod'."
+			exit 1
+			;;
+	esac
+}
+
 configure_sync_mode() {
 	local tools_kustomization
 	tools_kustomization="${KIND_DIR}/tools/kustomization.yaml"
@@ -164,10 +176,6 @@ configure_sync_mode() {
 			echo "Sync mode: prod (use prod ArgoCD and External Secrets)"
 			ensure_resource_absent "argocd" "${tools_kustomization}"
 			;;
-		*)
-			echo "ERROR: Invalid sync mode '${SYNC_MODE}'. Expected 'local' or 'prod'."
-			exit 1
-			;;
 	esac
 }
 
@@ -175,6 +183,8 @@ render_cluster_config() {
 	local host_ip="$1"
 
 	export IP_ADDR="${host_ip}"
+	# envsubst needs the literal variable name as its allowlist.
+	# shellcheck disable=SC2016
 	envsubst '$IP_ADDR' < "${KIND_DIR}/hack/cluster.yaml.tmpl" > "${KIND_DIR}/cluster.yaml"
 }
 
@@ -186,6 +196,8 @@ run_register_cluster() {
 	local host_ip="$1"
 
 	export IP_ADDR="${host_ip}"
+	# envsubst needs the literal variable name as its allowlist.
+	# shellcheck disable=SC2016
 	envsubst '$IP_ADDR' < "${KIND_DIR}/hack/register-cluster.bash.tmpl" > "${KIND_DIR}/hack/register-cluster.bash"
 	chmod +x "${KIND_DIR}/hack/register-cluster.bash"
 	"${KIND_DIR}/hack/register-cluster.bash" "${CLUSTER_NAME}" "${INITIAL_CONTEXT}"
@@ -207,7 +219,9 @@ startup_cluster() {
 
 	echo "Starting kind cluster setup with kind version ${KIND_VERSION} and k8s version ${K8S_VERSION}..."
 
-	configure_sync_mode
+	if [ "${SKIP_INITIAL_DEPLOY}" != "true" ]; then
+		configure_sync_mode
+	fi
 	ensure_kind_installed
 
 	host_ip="$(detect_host_ip)"
@@ -223,8 +237,12 @@ startup_cluster() {
 	kind delete cluster --name "${CLUSTER_NAME}" || true
 	kind create cluster --name "${CLUSTER_NAME}" --image "kindest/node:v${K8S_VERSION}" --config "${KIND_DIR}/cluster.yaml"
 
-	echo "Performing initial deployment to kind cluster..."
-	run_initial_deploy
+	if [ "${SKIP_INITIAL_DEPLOY}" = "true" ]; then
+		echo "Skipping initial deployment; cluster is ready for focused validation"
+	else
+		echo "Performing initial deployment to kind cluster..."
+		run_initial_deploy
+	fi
 
 	if [ "${SYNC_MODE}" = "prod" ]; then
 		echo "Registering kind cluster with prod ArgoCD..."
@@ -253,6 +271,10 @@ parse_args() {
 		case "$1" in
 			-p|--prod-sync)
 				SYNC_MODE="prod"
+				shift
+				;;
+			--skip-initial-deploy)
+				SKIP_INITIAL_DEPLOY="true"
 				shift
 				;;
 			--sync-mode=*)
@@ -335,6 +357,7 @@ parse_args() {
 
 main() {
 	parse_args "$@"
+	validate_sync_mode
 
 	case "${COMMAND}" in
 		startup)

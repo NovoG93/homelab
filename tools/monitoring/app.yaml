@@ -1,0 +1,4 @@
+name: monitoring
+path: tools/monitoring
+namespace: monitoring
+project: default

@@ -27,33 +27,54 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install tools
         shell: bash
         run: |
           bash hack/tasks/install-tools.bash
 
-      - name: Render every Kustomization
+      - name: Focused monitoring render contract
         shell: bash
+        run: |
+          bash hack/tests/monitoring-render.sh
+
+      - name: Render changed Kustomizations
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
 
           mkdir -p manifests
 
-          while IFS= read -r file; do
-            directory="$(dirname "$file")"
-            output="manifests/$(echo "$directory" | tr '/' '_').yaml"
-
-            echo "::group::Rendering ${directory}"
-            kustomize build --enable-helm "$directory" > "$output"
-            echo "::endgroup::"
-          done < <(
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
             find apps core tools kind \
               -type f \
               \( -name kustomization.yaml -o -name Kustomization \) \
               -print |
-            sort
-          )
+              while IFS= read -r file; do dirname "$file"; done |
+              sort -u > /tmp/render-directories.txt
+          else
+            git diff --name-only "$BASE_SHA" "$HEAD_SHA" |
+              hack/ci/changed-application-directories.bash --native \
+              > /tmp/render-directories.txt
+          fi
+
+          while IFS= read -r directory; do
+            output="manifests/$(echo "$directory" | tr '/' '_').yaml"
+            build_args=(--enable-helm)
+            if [[ "$directory" == kind/* ]]; then
+              build_args+=(--load-restrictor LoadRestrictionsNone)
+            fi
+
+            echo "::group::Rendering ${directory}"
+            kustomize build "${build_args[@]}" "$directory" > "$output"
+            echo "::endgroup::"
+          done < /tmp/render-directories.txt
 
       - name: Validate Kubernetes schemas
         shell: bash
@@ -93,27 +114,61 @@ jobs:
       - name: Create kind cluster
         shell: bash
         run: |
-          bash hack/ci/deploy-kind.bash --cluster-name homelab-ci
+          bash hack/ci/deploy-kind.bash --cluster-name homelab-ci --skip-initial-deploy
+
+      - name: Install Kind CNI prerequisite
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          manifest="$(mktemp)"
+          prerequisites="$(mktemp)"
+          trap 'rm -f "$manifest" "$prerequisites"' EXIT
+
+          kustomize build \
+            --enable-helm \
+            --load-restrictor LoadRestrictionsNone \
+            kind/core/calico > "$manifest"
+          yq eval-all \
+            'select(.kind == "Namespace" or .kind == "CustomResourceDefinition")' \
+            "$manifest" > "$prerequisites"
+          kubectl apply --server-side -f "$prerequisites"
+
+          mapfile -t crds < <(
+            yq eval-all --no-doc \
+              'select(.kind == "CustomResourceDefinition") | .metadata.name' \
+              "$manifest"
+          )
+          for crd in "${crds[@]}"; do
+            kubectl wait --for=condition=Established --timeout=2m "crd/${crd}"
+          done
+
+          kubectl apply --server-side -f "$manifest"
+          kubectl wait --for=condition=Ready --timeout=5m nodes --all
 
       - name: Determine changed application directories
         id: changes
         shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
 
-          git diff --name-only "$BASE_SHA" "$HEAD_SHA" |
-            awk -F/ '
-              $1 == "apps" || $1 == "core" || $1 == "tools" {
-                if (NF >= 2) {
-                  print $1 "/" $2
-                }
-              }
-            ' |
-            sort -u |
-            tee /tmp/changed-directories.txt
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            find kind -mindepth 3 -maxdepth 3 -type f \
+              \( -name kustomization.yaml -o -name Kustomization \) \
+              -print |
+              while IFS= read -r file; do dirname "$file"; done |
+              sort -u > /tmp/changed-directories.txt
+          else
+            git diff --name-only "$BASE_SHA" "$HEAD_SHA" |
+              hack/ci/changed-application-directories.bash \
+              > /tmp/changed-directories.txt
+          fi
+
+          cat /tmp/changed-directories.txt
 
           {
             echo "directories<<EOF"
@@ -132,16 +187,42 @@ jobs:
           fi
 
           while IFS= read -r directory; do
+            [[ "$directory" == "kind/core/calico" ]] && continue
             [[ -f "${directory}/kustomization.yaml" ]] || continue
+            build_args=(--enable-helm)
+            if [[ "$directory" == kind/* ]]; then
+              build_args+=(--load-restrictor LoadRestrictionsNone)
+            fi
 
             echo "::group::Server-side validation: ${directory}"
+            manifest="$(mktemp)"
+            kustomize build "${build_args[@]}" "$directory" > "$manifest"
 
-            kustomize build --enable-helm "$directory" |
-              kubectl apply \
-                --server-side \
-                --dry-run=server \
-                --validate=true \
-                -f -
+            if [[ "$directory" == kind/* ]]; then
+              prerequisites="$(mktemp)"
+              yq eval-all 'select(.kind == "Namespace" or .kind == "CustomResourceDefinition")' \
+                "$manifest" > "$prerequisites"
+              if [[ -s "$prerequisites" ]]; then
+                kubectl apply --server-side -f "$prerequisites"
+                mapfile -t crds < <(yq eval-all --no-doc 'select(.kind == "CustomResourceDefinition") | .metadata.name' "$manifest")
+                if [[ "${#crds[@]}" -gt 0 ]]; then
+                  crd_args=()
+                  for crd in "${crds[@]}"; do
+                    crd_args+=("crd/${crd}")
+                  done
+                  kubectl wait --for=condition=Established --timeout=2m \
+                    "${crd_args[@]}"
+                fi
+              fi
+              rm -f "$prerequisites"
+            fi
+
+            kubectl apply \
+              --server-side \
+              --dry-run=server \
+              --validate=true \
+              -f "$manifest"
+            rm -f "$manifest"
 
             echo "::endgroup::"
           done < /tmp/changed-directories.txt
@@ -152,11 +233,16 @@ jobs:
           set -euo pipefail
 
           while IFS= read -r directory; do
+            [[ "$directory" == "kind/core/calico" ]] && continue
             [[ -f "${directory}/kustomization.yaml" ]] || continue
+            build_args=(--enable-helm)
+            if [[ "$directory" == kind/* ]]; then
+              build_args+=(--load-restrictor LoadRestrictionsNone)
+            fi
 
             echo "::group::Deploying ${directory}"
 
-            kustomize build --enable-helm "$directory" |
+            kustomize build "${build_args[@]}" "$directory" |
               kubectl apply --server-side -f -
 
             echo "::endgroup::"
