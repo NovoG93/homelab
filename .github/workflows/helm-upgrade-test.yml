@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install tools
         shell: bash
@@ -38,15 +40,31 @@ jobs:
         run: |
           bash hack/tests/monitoring-render.sh
 
-      - name: Render every Kustomization
+      - name: Render changed Kustomizations
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
 
           mkdir -p manifests
 
-          while IFS= read -r file; do
-            directory="$(dirname "$file")"
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            find apps core tools kind \
+              -type f \
+              \( -name kustomization.yaml -o -name Kustomization \) \
+              -print |
+              while IFS= read -r file; do dirname "$file"; done |
+              sort -u > /tmp/render-directories.txt
+          else
+            git diff --name-only "$BASE_SHA" "$HEAD_SHA" |
+              hack/ci/changed-application-directories.bash --native \
+              > /tmp/render-directories.txt
+          fi
+
+          while IFS= read -r directory; do
             output="manifests/$(echo "$directory" | tr '/' '_').yaml"
             build_args=(--enable-helm)
             if [[ "$directory" == kind/* ]]; then
@@ -56,13 +74,7 @@ jobs:
             echo "::group::Rendering ${directory}"
             kustomize build "${build_args[@]}" "$directory" > "$output"
             echo "::endgroup::"
-          done < <(
-            find apps core tools kind \
-              -type f \
-              \( -name kustomization.yaml -o -name Kustomization \) \
-              -print |
-            sort
-          )
+          done < /tmp/render-directories.txt
 
       - name: Validate Kubernetes schemas
         shell: bash

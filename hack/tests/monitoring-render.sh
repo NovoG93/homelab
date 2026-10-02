@@ -258,6 +258,16 @@ mapped_directories="$({
 } | (cd "${repo_dir}" && "${directory_mapper}"))"
 [[ "${mapped_directories}" == $'kind/tools\nkind/tools/monitoring' ]] || \
   fail "the changed-application mapper returned unexpected directories: ${mapped_directories}"
+native_directories="$({
+  printf '%s\n' \
+    'tools/monitoring/values.yaml' \
+    'kind/tools/monitoring/values.yaml' \
+    'kind/tools/kustomization.yaml'
+} | (cd "${repo_dir}" && "${directory_mapper}" --native))"
+[[ "${native_directories}" == $'kind/tools\nkind/tools/monitoring\ntools/monitoring' ]] || \
+  fail "the native changed-directory mapper returned unexpected directories: ${native_directories}"
+grep -F 'changed-application-directories.bash --native' "${workflow}" >/dev/null || \
+  fail 'the render job must validate only the native Kustomizations changed by the pull request'
 # This is a literal workflow source assertion.
 # shellcheck disable=SC2016
 if [[ "$(grep -F -c 'kustomize build "${build_args[@]}" "$directory"' "${workflow}")" -lt 2 ]]; then

@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
-# Map changed manifest paths to directly deployable Kind Kustomizations.
+# Map changed manifest paths to directly deployable Kustomizations.
 set -euo pipefail
+
+mode=${1:---kind}
+[[ "$mode" == --kind || "$mode" == --native ]] || {
+  printf 'usage: %s [--kind|--native]\n' "$0" >&2
+  exit 2
+}
 
 while IFS= read -r file; do
   [[ -n "$file" ]] || continue
@@ -23,7 +29,7 @@ while IFS= read -r file; do
   esac
 
   [[ -n "$directory" ]] || continue
-  if [[ "$directory" != kind/* && -f "kind/${directory}/kustomization.yaml" ]]; then
+  if [[ "$mode" == --kind && "$directory" != kind/* && -f "kind/${directory}/kustomization.yaml" ]]; then
     directory="kind/${directory}"
   fi
   [[ -f "${directory}/kustomization.yaml" ]] && printf '%s\n' "$directory"
