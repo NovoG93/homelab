@@ -247,6 +247,16 @@ assert_json "${kind_json}" \
   'the Kind render must not contain duplicate resource identities'
 validate_custom_resources "${kind_json}" kind
 
+calico_yaml="${tmp_dir}/calico.yaml"
+kustomize build \
+  --enable-helm \
+  --load-restrictor LoadRestrictionsNone \
+  "${repo_dir}/kind/core/calico" >"${calico_yaml}" || fail 'Kind Calico render failed'
+if yq -e 'select((.metadata.annotations."helm.sh/hook" // "") | contains("pre-delete"))' \
+  "${calico_yaml}" >/dev/null 2>&1; then
+  fail 'the raw Kind Calico apply must exclude the destructive Helm pre-delete hook'
+fi
+
 workflow="${repo_dir}/.github/workflows/helm-upgrade-test.yml"
 directory_mapper="${repo_dir}/hack/ci/changed-application-directories.bash"
 lifecycle="${repo_dir}/kind/hack/lifecycle.bash"
@@ -271,6 +281,10 @@ grep -F 'changed-application-directories.bash --native' "${workflow}" >/dev/null
   fail 'the render job must validate only the native Kustomizations changed by the pull request'
 grep -F 'deploy-kind.bash --cluster-name homelab-ci --skip-initial-deploy' "${workflow}" >/dev/null || \
   fail 'the focused Kind gate must create a clean cluster without bootstrapping unrelated overlays'
+grep -F 'kind/core/calico' "${workflow}" >/dev/null || \
+  fail 'the focused Kind gate must install the declared CNI before waiting for workloads'
+grep -F 'kubectl wait --for=condition=Ready --timeout=5m nodes --all' "${workflow}" >/dev/null || \
+  fail 'the focused Kind gate must wait for every node to become Ready after CNI installation'
 grep -F -- '--skip-initial-deploy)' "${lifecycle}" >/dev/null || \
   fail 'the Kind lifecycle must support cluster creation without the full initial deployment'
 mkdir -p "${tmp_dir}/fake-kind-bin"

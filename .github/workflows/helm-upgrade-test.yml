@@ -116,6 +116,36 @@ jobs:
         run: |
           bash hack/ci/deploy-kind.bash --cluster-name homelab-ci --skip-initial-deploy
 
+      - name: Install Kind CNI prerequisite
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          manifest="$(mktemp)"
+          prerequisites="$(mktemp)"
+          trap 'rm -f "$manifest" "$prerequisites"' EXIT
+
+          kustomize build \
+            --enable-helm \
+            --load-restrictor LoadRestrictionsNone \
+            kind/core/calico > "$manifest"
+          yq eval-all \
+            'select(.kind == "Namespace" or .kind == "CustomResourceDefinition")' \
+            "$manifest" > "$prerequisites"
+          kubectl apply --server-side -f "$prerequisites"
+
+          mapfile -t crds < <(
+            yq eval-all --no-doc \
+              'select(.kind == "CustomResourceDefinition") | .metadata.name' \
+              "$manifest"
+          )
+          for crd in "${crds[@]}"; do
+            kubectl wait --for=condition=Established --timeout=2m "crd/${crd}"
+          done
+
+          kubectl apply --server-side -f "$manifest"
+          kubectl wait --for=condition=Ready --timeout=5m nodes --all
+
       - name: Determine changed application directories
         id: changes
         shell: bash
