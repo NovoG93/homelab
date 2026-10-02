@@ -187,6 +187,7 @@ jobs:
           fi
 
           while IFS= read -r directory; do
+            [[ "$directory" == "kind/core/calico" ]] && continue
             [[ -f "${directory}/kustomization.yaml" ]] || continue
             build_args=(--enable-helm)
             if [[ "$directory" == kind/* ]]; then
@@ -232,6 +233,7 @@ jobs:
           set -euo pipefail
 
           while IFS= read -r directory; do
+            [[ "$directory" == "kind/core/calico" ]] && continue
             [[ -f "${directory}/kustomization.yaml" ]] || continue
             build_args=(--enable-helm)
             if [[ "$directory" == kind/* ]]; then

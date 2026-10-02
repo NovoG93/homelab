@@ -285,6 +285,11 @@ grep -F 'kind/core/calico' "${workflow}" >/dev/null || \
   fail 'the focused Kind gate must install the declared CNI before waiting for workloads'
 grep -F 'kubectl wait --for=condition=Ready --timeout=5m nodes --all' "${workflow}" >/dev/null || \
   fail 'the focused Kind gate must wait for every node to become Ready after CNI installation'
+# This is a literal workflow source assertion.
+# shellcheck disable=SC2016
+if [[ "$(grep -F -c '[[ "$directory" == "kind/core/calico" ]] && continue' "${workflow}")" -lt 2 ]]; then
+  fail 'the validation and deploy loops must not reapply the controller-mutated CNI bootstrap manifest'
+fi
 grep -F -- '--skip-initial-deploy)' "${lifecycle}" >/dev/null || \
   fail 'the Kind lifecycle must support cluster creation without the full initial deployment'
 mkdir -p "${tmp_dir}/fake-kind-bin"
