@@ -78,7 +78,11 @@ for document in documents:
     for version in document["spec"]["versions"]:
         schema = version.get("schema", {}).get("openAPIV3Schema")
         if version.get("served") and schema:
-            path = schema_dir / f"{group}_{kind}_{version['name']}.json"
+            # kubeconform lower-cases ResourceKind when expanding its schema
+            # location template. Lower-case the generated filename explicitly
+            # so validation behaves identically on case-sensitive Linux CI and
+            # case-insensitive macOS filesystems.
+            path = schema_dir / f"{group}_{kind.lower()}_{version['name']}.json"
             path.write_text(json.dumps(schema), encoding="utf-8")
 
 with payload_path.open("w", encoding="utf-8") as handle:
