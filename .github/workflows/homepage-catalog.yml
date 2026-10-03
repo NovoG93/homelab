@@ -1,0 +1,68 @@
+name: Homepage catalog
+
+'on':
+  pull_request:
+    paths:
+      - "catalog/**"
+      - "hack/render-homepage-catalog.py"
+      - "hack/tests/homepage-catalog.sh"
+      - "apps/**/app.yaml"
+      - "apps/**/kustomization.yaml"
+      - "apps/**/httproute*.yaml"
+      - "apps/**/virtualserver*.yaml"
+      - "tools/**/app.yaml"
+      - "tools/**/kustomization.yaml"
+      - "tools/**/httproute*.yaml"
+      - "tools/**/virtualserver*.yaml"
+      - "kind/**"
+      - ".github/workflows/homepage-catalog.yml"
+  push:
+    branches: [main]
+    paths:
+      - "catalog/**"
+      - "hack/render-homepage-catalog.py"
+      - "hack/tests/homepage-catalog.sh"
+      - "apps/**/app.yaml"
+      - "apps/**/kustomization.yaml"
+      - "apps/**/httproute*.yaml"
+      - "apps/**/virtualserver*.yaml"
+      - "tools/**/app.yaml"
+      - "tools/**/kustomization.yaml"
+      - "tools/**/httproute*.yaml"
+      - "tools/**/virtualserver*.yaml"
+      - "kind/**"
+      - ".github/workflows/homepage-catalog.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: homepage-catalog-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  catalog:
+    name: Validate Homepage catalog
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install YAML parser
+        run: python -m pip install --disable-pip-version-check --quiet PyYAML
+
+      - name: Run focused catalog contract
+        shell: bash
+        run: bash hack/tests/homepage-catalog.sh
+
+      - name: Regenerate committed Homepage services artifact
+        run: python3 hack/render-homepage-catalog.py
+
+      - name: Require generated artifact to be committed
+        run: git diff --exit-code -- catalog/homepage-services.yaml

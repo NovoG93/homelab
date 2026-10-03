@@ -1,0 +1,62 @@
+- Kubernetes VirtualServers:
+  - Beans & Bites:
+      description: Primary NGINX VirtualServer endpoint
+      href: https://beans-and-bites.novotny.live/
+      icon: mdi-food
+  - Immich:
+      description: Primary NGINX VirtualServer endpoint
+      href: https://immich.novotny.live/
+      icon: mdi-image-multiple
+  - ntfy:
+      description: Primary NGINX VirtualServer endpoint
+      href: https://ntfy.novotny.live/
+      icon: mdi-bell
+  - Robotics Content Lab:
+      description: Primary NGINX VirtualServer endpoint
+      href: https://robotics-content-lab.novotny.live/
+      icon: mdi-robot
+  - Argo Workflows:
+      description: Argo Workflows administration endpoint
+      href: https://argo-workflows.novotny.live/
+      icon: mdi-sitemap
+  - Argo CD:
+      description: Argo CD administration endpoint
+      href: https://argocd.novotny.live/
+      icon: mdi-source-branch
+  - Pi-hole:
+      description: '[Restricted/Admin] Pi-hole administration endpoint'
+      href: https://pihole.novotny.live/
+      icon: mdi-dns
+- Kubernetes HTTPRoutes:
+  - Beans & Bites:
+      description: Gateway API HTTPRoute endpoint
+      href: https://beans-and-bites-gateway.novotny.live/
+      icon: mdi-food
+  - CouchDB:
+      description: '[Backing/Admin] Gateway API HTTPRoute backing endpoint'
+      href: https://couchdb-gateway.novotny.live/
+      icon: mdi-database
+  - Immich:
+      description: Gateway API HTTPRoute endpoint
+      href: https://immich-gateway.novotny.live/
+      icon: mdi-image-multiple
+  - ntfy:
+      description: Gateway API HTTPRoute endpoint
+      href: https://ntfy-gateway.novotny.live/
+      icon: mdi-bell
+  - Robotics Content Lab:
+      description: Gateway API HTTPRoute endpoint
+      href: https://robotics-content-lab-gateway.novotny.live/
+      icon: mdi-robot
+  - Argo Workflows:
+      description: Argo Workflows Gateway API endpoint
+      href: https://argo-workflows-gateway.novotny.live/
+      icon: mdi-sitemap
+  - Argo CD:
+      description: Argo CD Gateway API endpoint
+      href: https://argocd-gateway.novotny.live/
+      icon: mdi-source-branch
+  - Pi-hole:
+      description: '[Restricted/Admin] Pi-hole Gateway API administration endpoint'
+      href: https://pihole-gateway.novotny.live/
+      icon: mdi-dns
