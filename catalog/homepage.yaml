@@ -1,0 +1,318 @@
+apiVersion: homelab.novotny.live/v1alpha1
+kind: HomepageCatalog
+entries:
+  - id: vs-beans-and-bites
+    group: virtualservers
+    displayName: Beans & Bites
+    description: Primary NGINX VirtualServer endpoint
+    icon: mdi-food
+    weight: 10
+    enabled: true
+    source:
+      path: apps/beans-and-bites/virtualserver-frontend.yaml
+      kind: VirtualServer
+      name: beans-and-bites
+      expectedHostname: beans-and-bites.novotny.live
+
+  - id: vs-beans-and-bites-api
+    group: virtualservers
+    displayName: Beans & Bites API
+    description: Beans & Bites API endpoint, intentionally not a launch target
+    icon: mdi-api
+    weight: 11
+    enabled: false
+    source:
+      path: apps/beans-and-bites/virtualserver-api.yaml
+      kind: VirtualServer
+      name: beans-and-bites-api
+      expectedHostname: bnb-api.novotny.live
+    metadata:
+      exposure: backing-admin
+      restricted: true
+
+  - id: vs-beans-and-bites-backend
+    group: virtualservers
+    displayName: Beans & Bites Backend
+    description: Beans & Bites backend endpoint, intentionally not a launch target
+    icon: mdi-server
+    weight: 12
+    enabled: false
+    source:
+      path: apps/beans-and-bites/virtualserver-backend.yaml
+      kind: VirtualServer
+      name: beans-and-bites-backend
+      expectedHostname: beans-and-bites-backend.novotny.live
+    metadata:
+      exposure: backing-admin
+      restricted: true
+
+  - id: vs-immich
+    group: virtualservers
+    displayName: Immich
+    description: Primary NGINX VirtualServer endpoint
+    icon: mdi-image-multiple
+    weight: 20
+    enabled: true
+    source:
+      path: apps/immich/virtualserver.yaml
+      kind: VirtualServer
+      name: immich
+      expectedHostname: immich.novotny.live
+
+  - id: vs-ntfy
+    group: virtualservers
+    displayName: ntfy
+    description: Primary NGINX VirtualServer endpoint
+    icon: mdi-bell
+    weight: 30
+    enabled: true
+    source:
+      path: apps/ntfy/virtualserver.yaml
+      kind: VirtualServer
+      name: ntfy
+      expectedHostname: ntfy.novotny.live
+
+  - id: vs-robotics-content-lab
+    group: virtualservers
+    displayName: Robotics Content Lab
+    description: Primary NGINX VirtualServer endpoint
+    icon: mdi-robot
+    weight: 40
+    enabled: true
+    source:
+      path: apps/rcl/virtualserver-frontend.yaml
+      kind: VirtualServer
+      name: robotics-content-lab
+      expectedHostname: robotics-content-lab.novotny.live
+
+  - id: vs-robotics-content-lab-api
+    group: virtualservers
+    displayName: Robotics Content Lab API
+    description: Robotics Content Lab API endpoint, intentionally not a launch target
+    icon: mdi-api
+    weight: 41
+    enabled: false
+    source:
+      path: apps/rcl/virtualserver-api.yaml
+      kind: VirtualServer
+      name: robotics-content-lab-api
+      expectedHostname: rcl-api.novotny.live
+    metadata:
+      exposure: backing-admin
+      restricted: true
+
+  - id: vs-robotics-content-lab-backend
+    group: virtualservers
+    displayName: Robotics Content Lab Backend
+    description: Robotics Content Lab backend endpoint, intentionally not a launch target
+    icon: mdi-server
+    weight: 42
+    enabled: false
+    source:
+      path: apps/rcl/virtualserver-backend.yaml
+      kind: VirtualServer
+      name: robotics-content-lab-backend
+      expectedHostname: robotics-content-lab-backend.novotny.live
+    metadata:
+      exposure: backing-admin
+      restricted: true
+
+  - id: vs-couchdb
+    group: virtualservers
+    displayName: CouchDB
+    description: CouchDB backing endpoint, intentionally not a launch target
+    icon: mdi-database
+    weight: 43
+    enabled: false
+    source:
+      path: apps/couchdb/virtualserver.yaml
+      kind: VirtualServer
+      name: obsidian-couchdb
+      expectedHostname: couchdb.novotny.live
+    metadata:
+      exposure: backing-admin
+      restricted: true
+
+  - id: vs-argo-workflows
+    group: virtualservers
+    displayName: Argo Workflows
+    description: Argo Workflows administration endpoint
+    icon: mdi-sitemap
+    weight: 50
+    enabled: true
+    source:
+      path: tools/argo-workflows/virtualserver.yaml
+      kind: VirtualServer
+      name: argo-workflows
+      expectedHostname: argo-workflows.novotny.live
+
+  - id: vs-argocd
+    group: virtualservers
+    displayName: Argo CD
+    description: Argo CD administration endpoint
+    icon: mdi-source-branch
+    weight: 60
+    enabled: true
+    source:
+      path: tools/argocd/virtualserver.yaml
+      kind: VirtualServer
+      name: argocd
+      expectedHostname: argocd.novotny.live
+
+  - id: vs-pihole
+    group: virtualservers
+    displayName: Pi-hole
+    description: Pi-hole administration endpoint
+    icon: mdi-dns
+    weight: 70
+    enabled: true
+    source:
+      path: tools/pihole/virtualserver.yaml
+      kind: VirtualServer
+      name: pihole
+      expectedHostname: pihole.novotny.live
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: vs-vault
+    group: virtualservers
+    displayName: Vault
+    description: Vault administration endpoint, pending LAN trust-boundary review
+    icon: mdi-lock
+    weight: 80
+    enabled: false
+    source:
+      path: tools/vault/virtualserver.yaml
+      kind: VirtualServer
+      name: vault
+      expectedHostname: vault.novotny.live
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: route-beans-and-bites
+    group: httproutes
+    displayName: Beans & Bites
+    description: Gateway API HTTPRoute endpoint
+    icon: mdi-food
+    weight: 10
+    enabled: true
+    source:
+      path: apps/beans-and-bites/httproute.yaml
+      kind: HTTPRoute
+      name: beans-and-bites-http
+      expectedHostname: beans-and-bites-gateway.novotny.live
+
+  - id: route-couchdb
+    group: httproutes
+    displayName: CouchDB
+    description: Gateway API HTTPRoute backing endpoint
+    icon: mdi-database
+    weight: 20
+    enabled: true
+    source:
+      path: apps/couchdb/httproute.yaml
+      kind: HTTPRoute
+      name: obsidian-couchdb-http
+      expectedHostname: couchdb-gateway.novotny.live
+    metadata:
+      exposure: backing-admin
+      restricted: true
+
+  - id: route-immich
+    group: httproutes
+    displayName: Immich
+    description: Gateway API HTTPRoute endpoint
+    icon: mdi-image-multiple
+    weight: 30
+    enabled: true
+    source:
+      path: apps/immich/httproute.yaml
+      kind: HTTPRoute
+      name: immich-http
+      expectedHostname: immich-gateway.novotny.live
+
+  - id: route-ntfy
+    group: httproutes
+    displayName: ntfy
+    description: Gateway API HTTPRoute endpoint
+    icon: mdi-bell
+    weight: 40
+    enabled: true
+    source:
+      path: apps/ntfy/httproute.yaml
+      kind: HTTPRoute
+      name: ntfy-http
+      expectedHostname: ntfy-gateway.novotny.live
+
+  - id: route-robotics-content-lab
+    group: httproutes
+    displayName: Robotics Content Lab
+    description: Gateway API HTTPRoute endpoint
+    icon: mdi-robot
+    weight: 50
+    enabled: true
+    source:
+      path: apps/rcl/httproute.yaml
+      kind: HTTPRoute
+      name: robotics-content-lab-http
+      expectedHostname: robotics-content-lab-gateway.novotny.live
+
+  - id: route-argo-workflows
+    group: httproutes
+    displayName: Argo Workflows
+    description: Argo Workflows Gateway API endpoint
+    icon: mdi-sitemap
+    weight: 60
+    enabled: true
+    source:
+      path: tools/argo-workflows/httproute.yaml
+      kind: HTTPRoute
+      name: argo-workflows
+      expectedHostname: argo-workflows-gateway.novotny.live
+
+  - id: route-argocd
+    group: httproutes
+    displayName: Argo CD
+    description: Argo CD Gateway API endpoint
+    icon: mdi-source-branch
+    weight: 70
+    enabled: true
+    source:
+      path: tools/argocd/httproute.yaml
+      kind: HTTPRoute
+      name: argocd
+      expectedHostname: argocd-gateway.novotny.live
+
+  - id: route-pihole
+    group: httproutes
+    displayName: Pi-hole
+    description: Pi-hole Gateway API administration endpoint
+    icon: mdi-dns
+    weight: 80
+    enabled: true
+    source:
+      path: tools/pihole/httproute.yaml
+      kind: HTTPRoute
+      name: pihole
+      expectedHostname: pihole-gateway.novotny.live
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: route-vault
+    group: httproutes
+    displayName: Vault
+    description: Vault Gateway API administration endpoint, pending LAN trust-boundary review
+    icon: mdi-lock
+    weight: 90
+    enabled: false
+    source:
+      path: tools/vault/httproute.yaml
+      kind: HTTPRoute
+      name: vault
+      expectedHostname: vault-gateway.novotny.live
+    metadata:
+      exposure: restricted-admin
+      restricted: true
