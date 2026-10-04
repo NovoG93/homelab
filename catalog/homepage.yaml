@@ -316,3 +316,120 @@ entries:
     metadata:
       exposure: restricted-admin
       restricted: true
+
+pveNativeServices:
+  - id: pve-homepage
+    displayName: Homepage
+    description: LAN-only Homepage dashboard
+    icon: mdi-home
+    weight: 10
+    enabled: true
+    url: http://homepage.home.arpa:3000/
+
+  - id: pve-pihole
+    displayName: Pi-hole
+    description: LAN-only Pi-hole administration UI
+    icon: mdi-dns
+    weight: 20
+    enabled: true
+    url: http://192.168.0.154/admin/
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: pve-grafana
+    displayName: Grafana
+    description: LAN-only Grafana sign-in dashboard
+    icon: mdi-chart-line
+    weight: 30
+    enabled: true
+    url: http://grafana.home.arpa:3000/
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: pve-hermes-agent
+    displayName: Hermes Agent dashboard
+    description: Internal-only Hermes Agent login dashboard
+    icon: mdi-robot-outline
+    weight: 40
+    enabled: true
+    url: https://hermes.home.arpa/
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: pve-agent-vault
+    displayName: Agent Vault
+    description: Internal-only Agent Vault management UI and API
+    icon: mdi-safe
+    weight: 50
+    enabled: true
+    url: https://agent-vault.home.arpa/
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: pve-symphony-hub
+    displayName: Symphony Hub
+    description: Internal-only Symphony Hub UI
+    icon: mdi-view-dashboard
+    weight: 60
+    enabled: true
+    url: http://symphony.home.arpa:1000/
+
+  - id: pve-oh-my-symphony
+    displayName: oh-my-symphony board
+    description: Internal-only oh-my-symphony project board
+    icon: mdi-sitemap
+    weight: 70
+    enabled: true
+    url: http://symphony.home.arpa:9999/
+
+  - id: pve-workmate-ai
+    displayName: workmate-ai board
+    description: Internal-only workmate-ai project board
+    icon: mdi-robot
+    weight: 80
+    enabled: true
+    url: http://symphony.home.arpa:10000/
+
+  - id: pve-workmate-site
+    displayName: workmate-site board
+    description: Internal-only workmate-site project board
+    icon: mdi-web
+    weight: 90
+    enabled: true
+    url: http://symphony.home.arpa:10001/
+
+  - id: pve-workmate-internal
+    displayName: workmate-internal board
+    description: Internal-only restricted workmate-internal project board
+    icon: mdi-lock
+    weight: 100
+    enabled: true
+    url: http://symphony.home.arpa:10002/
+    metadata:
+      restricted: true
+
+  - id: pve-proxmox-pve
+    displayName: Proxmox PVE UI
+    description: LAN-only Proxmox PVE administration UI
+    icon: mdi-server-security
+    weight: 110
+    enabled: true
+    url: https://pve.novotny.live:8006/
+    metadata:
+      exposure: restricted-admin
+      restricted: true
+
+  - id: pve-proxmox-pve2
+    displayName: Proxmox PVE2 UI
+    description: LAN-only Proxmox PVE2 administration UI
+    icon: mdi-server-security
+    weight: 120
+    enabled: true
+    url: https://192.168.0.3:8006/
+    metadata:
+      exposure: restricted-admin
+      restricted: true
