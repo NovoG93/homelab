@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 """Validate the producer Homepage catalog and render Homepage services YAML.
 
-The generator intentionally reads source manifests from the same checkout as the
-catalog.  It does not query a Kubernetes API and it emits only ordinary HTTPS
-links, descriptions, and icons; runtime credentials and Homepage widgets are
-outside this contract.
+The generator validates a reviewed static PVE inventory plus Kubernetes source
+manifests from the same checkout. It does not query a Kubernetes or Proxmox API
+and it emits only ordinary links, descriptions, and icons; runtime credentials
+and Homepage widgets are outside this contract.
 """
 
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import os
 import re
 import sys
 import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
+from urllib.parse import urlsplit
 
 import yaml
 from yaml.constructor import ConstructorError
@@ -28,6 +30,8 @@ GROUPS = {
     "virtualservers": "Kubernetes VirtualServers",
     "httproutes": "Kubernetes HTTPRoutes",
 }
+PVE_GROUP = "PVE Native Services"
+RENDER_GROUPS = ("pveNativeServices", "virtualservers", "httproutes")
 SOURCE_KINDS = {
     "virtualservers": "VirtualServer",
     "httproutes": "HTTPRoute",
@@ -36,7 +40,7 @@ SOURCE_API_VERSIONS = {
     "VirtualServer": "k8s.nginx.org/v1",
     "HTTPRoute": "gateway.networking.k8s.io/v1",
 }
-ROOT_KEYS = {"apiVersion", "kind", "entries"}
+ROOT_KEYS = {"apiVersion", "kind", "entries", "pveNativeServices"}
 ENTRY_KEYS = {
     "id",
     "group",
@@ -48,6 +52,16 @@ ENTRY_KEYS = {
     "source",
     "metadata",
 }
+PVE_ENTRY_KEYS = {
+    "id",
+    "displayName",
+    "description",
+    "icon",
+    "weight",
+    "enabled",
+    "url",
+    "metadata",
+}
 SOURCE_KEYS = {"path", "kind", "name", "expectedHostname"}
 METADATA_KEYS = {"exposure", "restricted"}
 EXPOSURES = {"public", "restricted-admin", "backing-admin"}
@@ -57,6 +71,10 @@ FORBIDDEN_CATALOG_WORDS_RE = re.compile(
     r"(?:password|credential|kubeconfig|api[_-]?key|secret|token)", re.IGNORECASE
 )
 BACKEND_OR_API_RE = re.compile(r"(?:^|[-_/])(?:api|backend)(?:[-_.]|$)", re.IGNORECASE)
+RFC1918_NETWORKS = tuple(
+    ipaddress.ip_network(network)
+    for network in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+)
 
 
 class CatalogError(ValueError):
@@ -322,6 +340,61 @@ def validate_hostname(hostname: Any, context: str) -> str:
     return hostname
 
 
+def validate_pve_url(raw_url: Any, context: str) -> str:
+    url = require_string(raw_url, context)
+    if any(ord(character) < 0x20 or ord(character) == 0x7F for character in url):
+        raise CatalogError(f"{context} must not contain a control character")
+    try:
+        parsed = urlsplit(url)
+    except ValueError as exc:
+        raise CatalogError(f"{context} is not a valid URL") from exc
+
+    if parsed.scheme not in {"http", "https"}:
+        raise CatalogError(f"{context} must use HTTP or HTTPS")
+    if parsed.username is not None or parsed.password is not None:
+        raise CatalogError(f"{context} must not contain username or password")
+    if "?" in url or "#" in url or parsed.query or parsed.fragment:
+        raise CatalogError(f"{context} must not contain a query or fragment")
+    if parsed.path not in {"/", "/admin/"}:
+        raise CatalogError(f"{context} path must be '/' or '/admin/'")
+    if parsed.hostname is None:
+        raise CatalogError(f"{context} must contain a host")
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise CatalogError(f"{context} has an invalid port") from exc
+    if port is not None and not 1 <= port <= 65535:
+        raise CatalogError(f"{context} has an invalid port")
+
+    host = parsed.hostname
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        hostname = validate_hostname(host, f"{context}.host")
+        if not (
+            hostname.endswith(".home.arpa")
+            or hostname.endswith(".novotny.live")
+        ):
+            raise CatalogError(
+                f"{context}.host must be a private RFC1918 IP or end in "
+                "'.home.arpa' or '.novotny.live'"
+            )
+    else:
+        if not isinstance(address, ipaddress.IPv4Address) or not any(
+            address in network for network in RFC1918_NETWORKS
+        ):
+            raise CatalogError(
+                f"{context}.host must be a private RFC1918 IP or an approved hostname"
+            )
+
+    default_port = 80 if parsed.scheme == "http" else 443
+    authority = host if port is None or port == default_port else f"{host}:{port}"
+    canonical_url = f"{parsed.scheme}://{authority}{parsed.path}"
+    if url != canonical_url:
+        raise CatalogError(f"{context} must use canonical URL spelling: {canonical_url!r}")
+    return url
+
+
 def validate_metadata(value: Any, context: str) -> dict[str, Any]:
     if value is None:
         return {}
@@ -443,6 +516,68 @@ def validate_entry(
     }
 
 
+def validate_pve_entry(
+    raw_entry: Any,
+    index: int,
+    ids: set[str],
+    enabled_urls: dict[str, str],
+    enabled_names: dict[tuple[str, str], str],
+) -> dict[str, Any]:
+    context = f"pveNativeServices[{index}]"
+    entry = require_mapping(raw_entry, context)
+    reject_unknown_keys(entry, PVE_ENTRY_KEYS, context)
+    require_keys(
+        entry,
+        {"id", "displayName", "description", "icon", "weight", "enabled", "url"},
+        context,
+    )
+
+    entry_id = require_string(entry["id"], f"{context}.id")
+    if not ID_RE.fullmatch(entry_id):
+        raise CatalogError(f"{context}.id is not a stable kebab-case identifier")
+    if entry_id in ids:
+        raise CatalogError(f"duplicate entry ID: {entry_id}")
+    ids.add(entry_id)
+
+    display_name = require_string(entry["displayName"], f"{context}.displayName")
+    description = require_string(entry["description"], f"{context}.description")
+    icon = require_string(entry["icon"], f"{context}.icon")
+    weight = entry["weight"]
+    if isinstance(weight, bool) or not isinstance(weight, int) or weight < 0:
+        raise CatalogError(f"{context}.weight must be a non-negative integer")
+    enabled = entry["enabled"]
+    if not isinstance(enabled, bool):
+        raise CatalogError(f"{context}.enabled must be a boolean")
+    url = validate_pve_url(entry["url"], f"{context}.url")
+    metadata = validate_metadata(entry.get("metadata"), f"{context}.metadata")
+
+    if enabled:
+        previous = enabled_urls.get(url)
+        if previous is not None:
+            raise CatalogError(f"duplicate enabled URL: {url} ({previous} and {entry_id})")
+        enabled_urls[url] = entry_id
+        name_key = ("pveNativeServices", display_name)
+        previous_name = enabled_names.get(name_key)
+        if previous_name is not None:
+            raise CatalogError(
+                f"duplicate enabled display name: {display_name!r} in PVE Native Services "
+                f"({previous_name} and {entry_id})"
+            )
+        enabled_names[name_key] = entry_id
+
+    return {
+        "id": entry_id,
+        "group": "pveNativeServices",
+        "displayName": display_name,
+        "description": description,
+        "icon": icon,
+        "weight": weight,
+        "enabled": enabled,
+        "url": url,
+        "metadata": metadata,
+    }
+
+
 def validate_catalog(catalog: Any, repo_root: Path) -> list[dict[str, Any]]:
     document = require_mapping(catalog, "catalog")
     reject_unknown_keys(document, ROOT_KEYS, "catalog")
@@ -454,6 +589,9 @@ def validate_catalog(catalog: Any, repo_root: Path) -> list[dict[str, Any]]:
     entries = document["entries"]
     if not isinstance(entries, list) or not entries:
         raise CatalogError("catalog.entries must be a non-empty list")
+    pve_services = document["pveNativeServices"]
+    if not isinstance(pve_services, list) or not pve_services:
+        raise CatalogError("catalog.pveNativeServices must be a non-empty list")
 
     ensure_safe_catalog_strings(document)
     ids: set[str] = set()
@@ -463,6 +601,10 @@ def validate_catalog(catalog: Any, repo_root: Path) -> list[dict[str, Any]]:
         validate_entry(entry, index, repo_root, ids, enabled_urls, enabled_names)
         for index, entry in enumerate(entries)
     ]
+    normalized.extend(
+        validate_pve_entry(entry, index, ids, enabled_urls, enabled_names)
+        for index, entry in enumerate(pve_services)
+    )
     if not any(entry["enabled"] and entry["group"] == "virtualservers" for entry in normalized):
         raise CatalogError("catalog must enable at least one VirtualServer")
     if not any(entry["enabled"] and entry["group"] == "httproutes" for entry in normalized):
@@ -478,28 +620,31 @@ def homepage_description(entry: dict[str, Any]) -> str:
         "backing-admin": "[Backing/Admin]",
     }
     label = labels.get(exposure)
+    if label is None and entry["metadata"].get("restricted"):
+        label = "[Restricted]"
     return f"{label} {description}" if label else description
 
 
 def render_services(entries: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     enabled_entries = [entry for entry in entries if entry["enabled"]]
     rendered: list[dict[str, Any]] = []
-    for group in ("virtualservers", "httproutes"):
+    for group in RENDER_GROUPS:
         services = []
         for entry in sorted(
             (item for item in enabled_entries if item["group"] == group),
             key=lambda item: (item["weight"], item["id"]),
         ):
+            href = entry["url"] if group == "pveNativeServices" else f"https://{entry['source']['expectedHostname']}/"
             services.append(
                 {
                     entry["displayName"]: {
                         "description": homepage_description(entry),
-                        "href": f"https://{entry['source']['expectedHostname']}/",
+                        "href": href,
                         "icon": entry["icon"],
                     }
                 }
             )
-        rendered.append({GROUPS[group]: services})
+        rendered.append({PVE_GROUP if group == "pveNativeServices" else GROUPS[group]: services})
     return rendered
 
 

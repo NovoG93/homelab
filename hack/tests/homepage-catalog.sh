@@ -34,6 +34,7 @@ cmp -s "${rendered_file}" "${artifact_file}" || \
   fail 'committed Homepage services artifact is not reproducible from the catalog and sources'
 
 python3 - "${catalog_file}" "${artifact_file}" <<'PY'
+import ipaddress
 import re
 import sys
 from pathlib import Path
@@ -106,16 +107,48 @@ expected_httproutes = {
     "Argo CD": "https://argocd-gateway.novotny.live/",
     "Pi-hole": "https://pihole-gateway.novotny.live/",
 }
+expected_pve = {
+    "Homepage": "http://homepage.home.arpa:3000/",
+    "Pi-hole": "http://192.168.0.154/admin/",
+    "Grafana": "http://grafana.home.arpa:3000/",
+    "Hermes Agent dashboard": "https://hermes.home.arpa/",
+    "Agent Vault": "https://agent-vault.home.arpa/",
+    "Symphony Hub": "http://symphony.home.arpa:1000/",
+    "oh-my-symphony board": "http://symphony.home.arpa:9999/",
+    "workmate-ai board": "http://symphony.home.arpa:10000/",
+    "workmate-site board": "http://symphony.home.arpa:10001/",
+    "workmate-internal board": "http://symphony.home.arpa:10002/",
+    "Proxmox PVE UI": "https://pve.novotny.live:8006/",
+    "Proxmox PVE2 UI": "https://192.168.0.3:8006/",
+}
 expected_enabled = {
     ("virtualservers", name, url)
     for name, url in expected_virtualservers.items()
 } | {
     ("httproutes", name, url)
     for name, url in expected_httproutes.items()
+} | {
+    ("pveNativeServices", name, url)
+    for name, url in expected_pve.items()
 }
+assert len(catalog["pveNativeServices"]) == 12
+assert all(entry["enabled"] is True for entry in catalog["pveNativeServices"])
+assert {
+    entry["displayName"]: entry["url"] for entry in catalog["pveNativeServices"]
+} == expected_pve
+assert {
+    entry["displayName"] for entry in catalog["pveNativeServices"]
+} == set(expected_pve)
+all_catalog_entries = entries + catalog["pveNativeServices"]
+assert len({entry["id"] for entry in all_catalog_entries}) == len(all_catalog_entries)
 actual_enabled = {
     (entry["group"], entry["displayName"], f"https://{entry['source']['expectedHostname']}/")
     for entry in entries
+    if entry["enabled"]
+}
+actual_enabled |= {
+    ("pveNativeServices", entry["displayName"], entry["url"])
+    for entry in catalog["pveNativeServices"]
     if entry["enabled"]
 }
 assert actual_enabled == expected_enabled, (actual_enabled ^ expected_enabled)
@@ -135,9 +168,12 @@ for entry in entries:
     }:
         assert not entry["enabled"], source_name
 
-assert isinstance(artifact, list) and len(artifact) == 2
-assert list(artifact[0]) == ["Kubernetes VirtualServers"]
-assert list(artifact[1]) == ["Kubernetes HTTPRoutes"]
+assert isinstance(artifact, list) and len(artifact) == 3
+assert [next(iter(group)) for group in artifact] == [
+    "PVE Native Services",
+    "Kubernetes VirtualServers",
+    "Kubernetes HTTPRoutes",
+]
 
 def read_group(group):
     services = group[next(iter(group))]
@@ -151,18 +187,48 @@ def read_group(group):
         result[name] = fields
     return result
 
-actual_virtualservers = read_group(artifact[0])
-actual_httproutes = read_group(artifact[1])
+actual_pve = read_group(artifact[0])
+actual_virtualservers = read_group(artifact[1])
+actual_httproutes = read_group(artifact[2])
+assert {name: fields["href"] for name, fields in actual_pve.items()} == expected_pve
+assert len(actual_pve) == 12
+assert len(actual_virtualservers) == 7
+assert len(actual_httproutes) == 8
 assert {name: fields["href"] for name, fields in actual_virtualservers.items()} == expected_virtualservers
 assert {name: fields["href"] for name, fields in actual_httproutes.items()} == expected_httproutes
+assert sum(len(group[next(iter(group))]) for group in artifact) == 27
 
 all_urls = []
+rfc1918_networks = tuple(
+    ipaddress.ip_network(network)
+    for network in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+)
+for fields in actual_pve.values():
+    parsed = urlparse(fields["href"])
+    assert parsed.scheme in {"http", "https"} and parsed.netloc
+    assert parsed.path in {"/", "/admin/"}
+    assert parsed.username is None and parsed.password is None
+    assert not parsed.query and not parsed.fragment
+    assert parsed.hostname
+    try:
+        address = ipaddress.ip_address(parsed.hostname)
+    except ValueError:
+        assert parsed.hostname.endswith((".home.arpa", ".novotny.live"))
+    else:
+        assert isinstance(address, ipaddress.IPv4Address)
+        assert any(address in network for network in rfc1918_networks)
+    assert fields["description"] and fields["icon"]
+    all_urls.append(fields["href"])
+
 for services in (actual_virtualservers, actual_httproutes):
     for fields in services.values():
         parsed = urlparse(fields["href"])
         assert parsed.scheme == "https" and parsed.netloc and parsed.path == "/"
+        assert parsed.username is None and parsed.password is None
+        assert not parsed.query and not parsed.fragment
         assert fields["description"] and fields["icon"]
         all_urls.append(fields["href"])
+assert len(all_urls) == 27
 assert len(all_urls) == len(set(all_urls))
 assert "https://vault.novotny.live/" not in all_urls
 assert "https://vault-gateway.novotny.live/" not in all_urls
@@ -170,11 +236,21 @@ assert "https://couchdb.novotny.live/" not in all_urls
 assert "https://beans-and-bites-api.novotny.live/" not in all_urls
 assert "https://robotics-content-lab-api.novotny.live/" not in all_urls
 
-for services in (actual_virtualservers, actual_httproutes):
+for services in (actual_pve, actual_virtualservers, actual_httproutes):
     for fields in services.values():
         serialized = repr(fields).lower()
         assert not re.search(r"credential|kubeconfig|password|secret|token|widget|namespace", serialized), serialized
+serialized_catalog = repr(catalog).lower()
+assert not re.search(r"credential|kubeconfig|password|secret|token|widget|namespace", serialized_catalog), serialized_catalog
+serialized_pve = repr(catalog["pveNativeServices"]).lower()
+for forbidden in ("mcpjungle", "gateway", "monitoring", "wmtest", "mission-control", "control"):
+    assert forbidden not in serialized_pve, forbidden
 
+assert "[Restricted/Admin]" in actual_pve["Pi-hole"]["description"]
+assert "[Restricted/Admin]" in actual_pve["Grafana"]["description"]
+assert "[Restricted/Admin]" in actual_pve["Hermes Agent dashboard"]["description"]
+assert "[Restricted/Admin]" in actual_pve["Proxmox PVE UI"]["description"]
+assert "[Restricted]" in actual_pve["workmate-internal board"]["description"]
 assert "[Restricted/Admin]" in actual_virtualservers["Pi-hole"]["description"]
 assert "[Restricted/Admin]" in actual_httproutes["Pi-hole"]["description"]
 assert "[Backing/Admin]" in actual_httproutes["CouchDB"]["description"]
@@ -423,5 +499,483 @@ entry["widget"] = {"type": "generic"}
 path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 PY
 expect_failure credential-field "${mutated_catalog}" 'unsupported field'
+
+mutated_catalog="${tmp_dir}/pve-missing-field.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0].pop("url")
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-missing-field "${mutated_catalog}" 'missing required field'
+
+mutated_catalog="${tmp_dir}/pve-missing-section.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data.pop("pveNativeServices")
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-missing-section "${mutated_catalog}" 'missing required field'
+
+mutated_catalog="${tmp_dir}/pve-empty-section.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"] = []
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-empty-section "${mutated_catalog}" 'non-empty list'
+
+mutated_catalog="${tmp_dir}/pve-unknown-field.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["namespace"] = "default"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-unknown-field "${mutated_catalog}" 'unsupported field'
+
+mutated_catalog="${tmp_dir}/pve-source-field.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["source"] = {"path": "not-a-kubernetes-source"}
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-source-field "${mutated_catalog}" 'unsupported field'
+
+mutated_catalog="${tmp_dir}/pve-credential-field.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["token"] = "not-a-real-token"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-credential-field "${mutated_catalog}" 'credential-shaped field'
+
+mutated_catalog="${tmp_dir}/pve-credential-value.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["description"] = "contains token material"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-credential-value "${mutated_catalog}" 'credential-shaped value'
+
+mutated_catalog="${tmp_dir}/pve-widget.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["widget"] = {"type": "generic"}
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-widget "${mutated_catalog}" 'unsupported field'
+
+mutated_catalog="${tmp_dir}/pve-invalid-scheme.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "ftp://homepage.home.arpa:3000/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-invalid-scheme "${mutated_catalog}" 'HTTP or HTTPS'
+
+mutated_catalog="${tmp_dir}/pve-url-userinfo.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://user:pass@homepage.home.arpa:3000/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-url-userinfo "${mutated_catalog}" 'username or password'
+
+mutated_catalog="${tmp_dir}/pve-url-query.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://homepage.home.arpa:3000/?view=full"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-url-query "${mutated_catalog}" 'query or fragment'
+
+mutated_catalog="${tmp_dir}/pve-url-fragment.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://homepage.home.arpa:3000/#top"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-url-fragment "${mutated_catalog}" 'query or fragment'
+
+mutated_catalog="${tmp_dir}/pve-empty-query.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://homepage.home.arpa:3000/?"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-empty-query "${mutated_catalog}" 'query or fragment'
+
+mutated_catalog="${tmp_dir}/pve-empty-fragment.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://homepage.home.arpa:3000/#"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-empty-fragment "${mutated_catalog}" 'query or fragment'
+
+for mutation in \
+  'pve-empty-port|https://hermes.home.arpa:/' \
+  'pve-uppercase-authority|HTTPS://HERMES.HOME.ARPA/' \
+  'pve-default-port|https://hermes.home.arpa:443/' \
+  'pve-leading-zero-port|https://hermes.home.arpa:000443/'
+do
+  label=${mutation%%|*}
+  url=${mutation#*|}
+  mutated_catalog="${tmp_dir}/${label}.yaml"
+  cp "${catalog_file}" "${mutated_catalog}"
+  python3 - "${mutated_catalog}" "${url}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = sys.argv[2]
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+  expect_failure "${label}" "${mutated_catalog}" 'canonical'
+done
+
+mutated_catalog="${tmp_dir}/pve-control-character.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "https://hermes.home.arpa\t/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-control-character "${mutated_catalog}" 'control character'
+
+mutated_catalog="${tmp_dir}/pve-unsupported-path.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://homepage.home.arpa:3000/private/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-unsupported-path "${mutated_catalog}" 'path must be'
+
+mutated_catalog="${tmp_dir}/pve-public-ip.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "https://8.8.8.8/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-public-ip "${mutated_catalog}" 'private RFC1918'
+
+mutated_catalog="${tmp_dir}/pve-loopback-ip.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://127.0.0.1/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-loopback-ip "${mutated_catalog}" 'private RFC1918'
+
+mutated_catalog="${tmp_dir}/pve-link-local-ip.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://169.254.1.1/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-link-local-ip "${mutated_catalog}" 'private RFC1918'
+
+mutated_catalog="${tmp_dir}/pve-unspecified-ip.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://0.0.0.0/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-unspecified-ip "${mutated_catalog}" 'private RFC1918'
+
+mutated_catalog="${tmp_dir}/pve-multicast-ip.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "http://224.0.0.1/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-multicast-ip "${mutated_catalog}" 'private RFC1918'
+
+mutated_catalog="${tmp_dir}/pve-deceptive-hostname.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "https://pve.novotny.live.attacker.example/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-deceptive-hostname "${mutated_catalog}" 'novotny.live'
+
+mutated_catalog="${tmp_dir}/pve-duplicate-id.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import copy
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+clone = copy.deepcopy(data["pveNativeServices"][0])
+clone["displayName"] = "Duplicate PVE ID"
+clone["url"] = "http://duplicate.home.arpa:3001/"
+data["pveNativeServices"].append(clone)
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-duplicate-id "${mutated_catalog}" 'duplicate entry ID'
+
+mutated_catalog="${tmp_dir}/pve-k8s-id-collision.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["id"] = "vs-beans-and-bites"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-k8s-id-collision "${mutated_catalog}" 'duplicate entry ID'
+
+mutated_catalog="${tmp_dir}/pve-duplicate-url.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import copy
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+clone = copy.deepcopy(data["pveNativeServices"][0])
+clone["id"] = "pve-duplicate-url"
+clone["displayName"] = "Duplicate PVE URL"
+data["pveNativeServices"].append(clone)
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-duplicate-url "${mutated_catalog}" 'duplicate enabled URL'
+
+mutated_catalog="${tmp_dir}/pve-k8s-url-collision.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data["pveNativeServices"][0]["url"] = "https://beans-and-bites.novotny.live/"
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-k8s-url-collision "${mutated_catalog}" 'duplicate enabled URL'
+
+mutated_catalog="${tmp_dir}/pve-duplicate-name.yaml"
+cp "${catalog_file}" "${mutated_catalog}"
+python3 - "${mutated_catalog}" <<'PY'
+import copy
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+clone = copy.deepcopy(data["pveNativeServices"][0])
+clone["id"] = "pve-duplicate-name"
+clone["url"] = "http://duplicate-name.home.arpa:3001/"
+data["pveNativeServices"].append(clone)
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_failure pve-duplicate-name "${mutated_catalog}" 'duplicate enabled display name'
+
+expect_output_group_failure() {
+  local label="$1"
+  local mutated_artifact="$2"
+
+  if python3 - "${mutated_artifact}" >/dev/null 2>&1 <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+artifact = yaml.safe_load(Path(sys.argv[1]).read_text(encoding="utf-8"))
+expected = [
+    "PVE Native Services",
+    "Kubernetes VirtualServers",
+    "Kubernetes HTTPRoutes",
+]
+actual = [next(iter(group)) for group in artifact]
+assert actual == expected, (actual, expected)
+PY
+  then
+    fail "output group mutation ${label} unexpectedly passed"
+  fi
+}
+
+mutated_artifact="${tmp_dir}/output-groups-reordered.yaml"
+cp "${artifact_file}" "${mutated_artifact}"
+python3 - "${mutated_artifact}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data[0], data[2] = data[2], data[0]
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_output_group_failure output-groups-reordered "${mutated_artifact}"
+
+mutated_artifact="${tmp_dir}/output-groups-missing.yaml"
+cp "${artifact_file}" "${mutated_artifact}"
+python3 - "${mutated_artifact}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data.pop(0)
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_output_group_failure output-groups-missing "${mutated_artifact}"
+
+mutated_artifact="${tmp_dir}/output-groups-extra.yaml"
+cp "${artifact_file}" "${mutated_artifact}"
+python3 - "${mutated_artifact}" <<'PY'
+import sys
+from pathlib import Path
+import yaml
+
+path = Path(sys.argv[1])
+data = yaml.safe_load(path.read_text(encoding="utf-8"))
+data.append({"Unexpected Group": []})
+path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+PY
+expect_output_group_failure output-groups-extra "${mutated_artifact}"
 
 printf 'homepage-catalog: ok\n'
