@@ -108,18 +108,18 @@ expected_httproutes = {
     "Pi-hole": "https://pihole-gateway.novotny.live/",
 }
 expected_pve = {
-    "Homepage": "http://homepage.home.arpa:3000/",
-    "Pi-hole": "http://192.168.0.154/admin/",
-    "Grafana": "http://grafana.home.arpa:3000/",
+    "Homepage": "https://homepage.home.arpa/",
+    "Pi-hole": "https://pihole.home.arpa/admin/",
+    "Grafana": "https://grafana.home.arpa/",
     "Hermes Agent dashboard": "https://hermes.home.arpa/",
     "Agent Vault": "https://agent-vault.home.arpa/",
-    "Symphony Hub": "http://symphony.home.arpa:1000/",
-    "oh-my-symphony board": "http://symphony.home.arpa:9999/",
-    "workmate-ai board": "http://symphony.home.arpa:10000/",
-    "workmate-site board": "http://symphony.home.arpa:10001/",
-    "workmate-internal board": "http://symphony.home.arpa:10002/",
-    "Proxmox PVE UI": "https://pve.novotny.live:8006/",
-    "Proxmox PVE2 UI": "https://192.168.0.3:8006/",
+    "Symphony Hub": "https://symphony.home.arpa/",
+    "oh-my-symphony board": "https://oh-my-symphony.home.arpa/",
+    "workmate-ai board": "https://workmate-ai.home.arpa/",
+    "workmate-site board": "https://workmate-site.home.arpa/",
+    "workmate-internal board": "https://workmate-internal.home.arpa/",
+    "Proxmox PVE UI": "https://pve.home.arpa/",
+    "Proxmox PVE2 UI": "https://pve2.home.arpa/",
 }
 expected_enabled = {
     ("virtualservers", name, url)

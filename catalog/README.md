@@ -36,12 +36,20 @@ labels, and renders a restricted-only record with `[Restricted]`; it emits only
 ## Selection policy
 
 - PVE Native Services are curated, static, live-evidence-backed links from the
-  Proxmox-cluster inventory; the generator does not perform runtime discovery.
+  Proxmox-cluster inventory. The approved cards use the CT110 Caddy reverse
+  proxy's HTTPS `.home.arpa` endpoints; the generator does not perform runtime
+  discovery.
 - Include only user-facing PVE/PVE2 guest or host web surfaces with direct
   reachability evidence and a reviewed safe LAN URL.
 - The approved native set is exactly the 12 cards in `homepage.yaml`: Homepage,
   Pi-hole, Grafana, Hermes Agent dashboard, Agent Vault, Symphony Hub, the four
-  named Symphony/workmate boards, and the two Proxmox node UIs.
+  named Symphony/workmate boards, and the two Proxmox node UIs. Their reviewed
+  HTTPS targets are `https://homepage.home.arpa/`, `https://pihole.home.arpa/admin/`,
+  `https://grafana.home.arpa/`, `https://hermes.home.arpa/`,
+  `https://agent-vault.home.arpa/`, `https://symphony.home.arpa/`,
+  `https://oh-my-symphony.home.arpa/`, `https://workmate-ai.home.arpa/`,
+  `https://workmate-site.home.arpa/`, `https://workmate-internal.home.arpa/`,
+  `https://pve.home.arpa/`, and `https://pve2.home.arpa/`.
 - Exclude API-only MCPJungle and Symphony gateways, monitoring data-plane
   backends, Kubernetes routes, `wmtest`, mission-control or other stale names,
   and unverified public/stale service records.
