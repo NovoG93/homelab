@@ -1,15 +1,15 @@
 - PVE Native Services:
   - Homepage:
       description: LAN-only Homepage dashboard
-      href: http://homepage.home.arpa:3000/
+      href: https://homepage.home.arpa/
       icon: mdi-home
   - Pi-hole:
       description: '[Restricted/Admin] LAN-only Pi-hole administration UI'
-      href: http://192.168.0.154/admin/
+      href: https://pihole.home.arpa/admin/
       icon: mdi-dns
   - Grafana:
       description: '[Restricted/Admin] LAN-only Grafana sign-in dashboard'
-      href: http://grafana.home.arpa:3000/
+      href: https://grafana.home.arpa/
       icon: mdi-chart-line
   - Hermes Agent dashboard:
       description: '[Restricted/Admin] Internal-only Hermes Agent login dashboard'
@@ -21,31 +21,31 @@
       icon: mdi-safe
   - Symphony Hub:
       description: Internal-only Symphony Hub UI
-      href: http://symphony.home.arpa:1000/
+      href: https://symphony.home.arpa/
       icon: mdi-view-dashboard
   - oh-my-symphony board:
       description: Internal-only oh-my-symphony project board
-      href: http://symphony.home.arpa:9999/
+      href: https://oh-my-symphony.home.arpa/
       icon: mdi-sitemap
   - workmate-ai board:
       description: Internal-only workmate-ai project board
-      href: http://symphony.home.arpa:10000/
+      href: https://workmate-ai.home.arpa/
       icon: mdi-robot
   - workmate-site board:
       description: Internal-only workmate-site project board
-      href: http://symphony.home.arpa:10001/
+      href: https://workmate-site.home.arpa/
       icon: mdi-web
   - workmate-internal board:
       description: '[Restricted] Internal-only restricted workmate-internal project board'
-      href: http://symphony.home.arpa:10002/
+      href: https://workmate-internal.home.arpa/
       icon: mdi-lock
   - Proxmox PVE UI:
       description: '[Restricted/Admin] LAN-only Proxmox PVE administration UI'
-      href: https://pve.novotny.live:8006/
+      href: https://pve.home.arpa/
       icon: mdi-server-security
   - Proxmox PVE2 UI:
       description: '[Restricted/Admin] LAN-only Proxmox PVE2 administration UI'
-      href: https://192.168.0.3:8006/
+      href: https://pve2.home.arpa/
       icon: mdi-server-security
 - Kubernetes VirtualServers:
   - Beans & Bites:

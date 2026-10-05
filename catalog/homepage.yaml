@@ -324,7 +324,7 @@ pveNativeServices:
     icon: mdi-home
     weight: 10
     enabled: true
-    url: http://homepage.home.arpa:3000/
+    url: https://homepage.home.arpa/
 
   - id: pve-pihole
     displayName: Pi-hole
@@ -332,7 +332,7 @@ pveNativeServices:
     icon: mdi-dns
     weight: 20
     enabled: true
-    url: http://192.168.0.154/admin/
+    url: https://pihole.home.arpa/admin/
     metadata:
       exposure: restricted-admin
       restricted: true
@@ -343,7 +343,7 @@ pveNativeServices:
     icon: mdi-chart-line
     weight: 30
     enabled: true
-    url: http://grafana.home.arpa:3000/
+    url: https://grafana.home.arpa/
     metadata:
       exposure: restricted-admin
       restricted: true
@@ -376,7 +376,7 @@ pveNativeServices:
     icon: mdi-view-dashboard
     weight: 60
     enabled: true
-    url: http://symphony.home.arpa:1000/
+    url: https://symphony.home.arpa/
 
   - id: pve-oh-my-symphony
     displayName: oh-my-symphony board
@@ -384,7 +384,7 @@ pveNativeServices:
     icon: mdi-sitemap
     weight: 70
     enabled: true
-    url: http://symphony.home.arpa:9999/
+    url: https://oh-my-symphony.home.arpa/
 
   - id: pve-workmate-ai
     displayName: workmate-ai board
@@ -392,7 +392,7 @@ pveNativeServices:
     icon: mdi-robot
     weight: 80
     enabled: true
-    url: http://symphony.home.arpa:10000/
+    url: https://workmate-ai.home.arpa/
 
   - id: pve-workmate-site
     displayName: workmate-site board
@@ -400,7 +400,7 @@ pveNativeServices:
     icon: mdi-web
     weight: 90
     enabled: true
-    url: http://symphony.home.arpa:10001/
+    url: https://workmate-site.home.arpa/
 
   - id: pve-workmate-internal
     displayName: workmate-internal board
@@ -408,7 +408,7 @@ pveNativeServices:
     icon: mdi-lock
     weight: 100
     enabled: true
-    url: http://symphony.home.arpa:10002/
+    url: https://workmate-internal.home.arpa/
     metadata:
       restricted: true
 
@@ -418,7 +418,7 @@ pveNativeServices:
     icon: mdi-server-security
     weight: 110
     enabled: true
-    url: https://pve.novotny.live:8006/
+    url: https://pve.home.arpa/
     metadata:
       exposure: restricted-admin
       restricted: true
@@ -429,7 +429,7 @@ pveNativeServices:
     icon: mdi-server-security
     weight: 120
     enabled: true
-    url: https://192.168.0.3:8006/
+    url: https://pve2.home.arpa/
     metadata:
       exposure: restricted-admin
       restricted: true
