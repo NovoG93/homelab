@@ -2,31 +2,34 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
   name: kustomization
+namespace: immich
 
 helmGlobals:
-  chartHome: ../../helmCharts/
-
+  chartHome: ../../helmCharts/immich-0.13.2/
 
 resources:
 - immich-pv.yaml
 - immich-pvc.yaml
-- virtualserver.yaml
-- httproute.yaml
-- cloudnative-pg/pg-db.yaml
 - es-immich-postgres-user.yaml
 - es-smb-creds.yaml
-- notify.yaml
-- es-nfty.yaml
 
 helmCharts:
 - includeCRDs: true
   name: immich
   repo: oci://ghcr.io/immich-app/immich-charts/
-  version: 0.11.1
+  version: 0.13.2
   releaseName: immich
   namespace: immich
   valuesFile: values.yaml
 
+patches:
+- target:
+    kind: ConfigMap
+    name: immich-immich-config
+  patch: |-
+    - op: add
+      path: /metadata/namespace
+      value: immich
 
 generatorOptions:
   disableNameSuffixHash: true

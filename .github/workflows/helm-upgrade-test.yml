@@ -5,6 +5,8 @@ name: Helm upgrade test
     branches: [ "main" ]
     paths:
       - "apps/**"
+      - "helmCharts/immich-0.13.2/**"
+      - "hack/check-immich-migration-stage.sh"
       - "core/**"
       - "tools/**"
       - "kind/**"
@@ -34,6 +36,10 @@ jobs:
         shell: bash
         run: |
           bash hack/tasks/install-tools.bash
+
+      - name: Verify Immich migration safety contract
+        shell: bash
+        run: bash hack/check-immich-migration-stage.sh
 
       - name: Focused monitoring render contract
         shell: bash
@@ -175,6 +181,45 @@ jobs:
             cat /tmp/changed-directories.txt
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Install Immich CI prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="$(mktemp)"
+          prerequisites="$(mktemp)"
+          operator_manifest="$(mktemp)"
+          trap 'rm -f "$manifest" "$prerequisites" "$operator_manifest"' EXIT
+
+          # Native Immich changes have no Kind overlay. A fresh Kind cluster
+          # needs ESO's API/webhook and the destination namespace first.
+          kustomize build --enable-helm kind/tools/external-secret-operator > "$manifest"
+          if yq -e 'select(.kind == "Job" and .metadata.annotations."helm.sh/hook" == "pre-delete")' "$manifest" >/dev/null 2>&1; then
+            echo 'Refusing to raw-apply an ESO pre-delete Helm hook' >&2
+            exit 1
+          fi
+          kubectl create namespace external-secret-operator --dry-run=client -o yaml |
+            kubectl apply --server-side -f -
+          yq eval-all 'select(.kind == "Namespace" or .kind == "CustomResourceDefinition")' \
+            "$manifest" > "$prerequisites"
+          kubectl apply --server-side -f "$prerequisites"
+          mapfile -t crds < <(yq eval-all --no-doc \
+            'select(.kind == "CustomResourceDefinition") | .metadata.name' "$manifest")
+          [[ "${#crds[@]}" -gt 0 ]] || { echo 'ESO CRDs are missing' >&2; exit 1; }
+          for crd in "${crds[@]}"; do
+            kubectl wait --for=condition=Established --timeout=2m "crd/${crd}"
+          done
+          # Vault-backed stores belong to production and require a ready
+          # webhook; Kind needs only the operator and its CRDs.
+          yq eval-all 'select(.kind != "ClusterSecretStore")' \
+            "$manifest" > "$operator_manifest"
+          kubectl apply --server-side -f "$operator_manifest"
+          for deployment in external-secrets external-secrets-cert-controller external-secrets-webhook; do
+            kubectl -n external-secret-operator rollout status \
+              "deployment/${deployment}" --timeout=5m
+          done
+          kubectl create namespace immich --dry-run=client -o yaml |
+            kubectl apply --server-side -f -
 
       - name: Server-side validate changed applications
         shell: bash
