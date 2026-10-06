@@ -1,0 +1,30 @@
+annotations:
+  artifacthub.io/category: storage
+  artifacthub.io/changes: |-
+    - "bump create-workflow-token action to v3 (#385)"
+    - "deps: bump Immich version to v3.2.0 (#401)"
+    - "deps: update dependency cosign to v3.1.3 (#395)"
+    - "deps: update dependency helm to v4.2.4 (#393)"
+    - "deps: update dependency kind to v0.33.0 (#399)"
+    - "deps: update dependency oras to v1.3.4 (#394)"
+    - "deps: update dependency yq to v4.53.6 (#398)"
+    - "deps: update github-actions (#391)"
+    - "deps: update helm release common to v5.1.0 (#400)"
+    - "deps: update testing dependencies (#390)"
+apiVersion: v2
+appVersion: v3.2.0
+dependencies:
+- name: common
+  repository: https://bjw-s-labs.github.io/helm-charts
+  version: 5.1.0
+description: A chart to power Immich (immich.app) running on kubernetes
+home: https://immich.app/
+icon: https://raw.githubusercontent.com/immich-app/immich/main/design/immich-logo.svg
+maintainers:
+- email: boet@futo.org
+  name: bo0tzz
+name: immich
+sources:
+- https://github.com/immich-app/immich-charts/tree/main/charts/immich
+- https://github.com/immich-app/immich
+version: 0.13.2
