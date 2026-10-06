@@ -1,0 +1,25 @@
+# Preparation-only storage definition. Keep excluded until wp2 is prepared by infra.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-postgres-local
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  capacity:
+    storage: 20Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: immich-local
+  local:
+    path: /var/lib/immich/postgres
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - wp2
