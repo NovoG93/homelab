@@ -69,6 +69,9 @@ done
 assert_yq "$kustomization" \
   '(.helmCharts | length == 1) and (.helmCharts[0].name == "immich") and (.helmCharts[0].version == "0.13.2")' \
   'kustomization does not pin Immich chart 0.13.2'
+assert_yq "$kustomization" \
+  '.helmGlobals.chartHome == "../../helmCharts/immich-0.13.2/"' \
+  'chartHome must resolve to the tracked chart on a clean CI checkout'
 
 [ -f "$chart_dir/Chart.yaml" ] || fail "missing vendored Immich chart at $chart_dir"
 git -C "$repo_dir" ls-files --error-unmatch -- \
