@@ -1,3 +1,6 @@
+# Preparation-only CNPG skeleton. Keep this file excluded from the disabled app render.
+# The source Service and password Secret are deliberately named references only;
+# creating and validating them belongs to a later, separately gated import revision.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -5,24 +8,21 @@ metadata:
 spec:
   instances: 1
 
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3
+
   storage:
     pvcTemplate:
       accessModes:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 1Gi
-      storageClassName: nfs-client
+          storage: 20Gi
+      storageClassName: immich-local
       volumeMode: Filesystem
-
-  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.4.3
-
 
   postgresql:
     shared_preload_libraries:
-      - "vchord.so"
-  
-  
+      - vchord.so
 
   bootstrap:
     initdb:
@@ -30,20 +30,33 @@ spec:
       owner: immich
       secret:
         name: immich-database-credentials
-      postInitApplicationSQL:
-        # Commands based on: https://immich.app/docs/administration/postgres-standalone/#without-superuser-permission
-        - CREATE EXTENSION vchord CASCADE;
-        - CREATE EXTENSION earthdistance CASCADE;
-    
+      import:
+        type: microservice
+        databases:
+          - immich-db
+        source:
+          externalCluster: immich-restore-source
+
+  externalClusters:
+    - name: immich-restore-source
+      connectionParameters:
+        host: immich-restore-source.immich.svc.cluster.local
+        port: "5432"
+        user: immich-import
+        dbname: postgres
+      password:
+        name: immich-restore-source-credentials
+        key: password
 
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
-              - key: apps
-                operator: Exists
-
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wp2
     tolerations:
       - key: apps
         operator: Exists

@@ -1,0 +1,10 @@
+# Preparation-only storage definition. Keep excluded from the disabled app render.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: immich-local
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain

@@ -32,10 +32,14 @@ workflow="$repo_dir/.github/workflows/helm-upgrade-test.yml"
 yq -e '.' "$workflow" >/dev/null 2>&1 || fail 'Helm CI workflow is not valid YAML'
 grep -Fq 'bash hack/check-immich-migration-stage.sh' "$workflow" || \
   fail 'Helm CI does not run the Immich migration contract'
+grep -Fq 'bash hack/tests/immich-storage-preparation.sh' "$workflow" || \
+  fail 'Helm CI does not run the Immich storage preparation contract'
 grep -Fq '"helmCharts/immich-0.13.2/**"' "$workflow" || \
   fail 'vendored chart changes do not trigger Helm CI'
 grep -Fq '"hack/check-immich-migration-stage.sh"' "$workflow" || \
   fail 'migration contract changes do not trigger Helm CI'
+grep -Fq '"hack/tests/immich-storage-preparation.sh"' "$workflow" || \
+  fail 'storage preparation contract changes do not trigger Helm CI'
 grep -Fq 'bash hack/tests/monitoring-render.sh' "$workflow" || \
   fail 'upstream monitoring render contract was lost'
 grep -Fq -- '--skip-initial-deploy' "$workflow" || \
