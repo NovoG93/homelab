@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=./values.schema.json
 image:
   repository: docker.io/binwiederhier/ntfy
-  tag: v2.26.0@sha256:a6d335064ae927c4dbef118e1fa39656b3d2e01472b2a82af5915d5cebfe815f
+  tag: v2.29.0@sha256:4c599cf0818965782f93f652bd843e92714992e84d6b88ad17713dc0951cda1f
   pullPolicy: IfNotPresent
 persistence:
   config:
