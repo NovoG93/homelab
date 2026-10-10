@@ -8,6 +8,8 @@ helmGlobals:
   chartHome: ../../helmCharts/immich-0.13.2/
 
 resources:
+- immich-production-pv.yaml
+- immich-production-pvc.yaml
 - immich-pv.yaml
 - immich-pvc.yaml
 - es-immich-postgres-user.yaml

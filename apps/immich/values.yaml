@@ -17,7 +17,7 @@ immich:
     enabled: false
   persistence:
     library:
-      existingClaim: immich-smb-claim
+      existingClaim: immich-production-smb-claim
   configuration:
     trash:
       enabled: true

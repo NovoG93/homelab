@@ -110,6 +110,9 @@ assert_yq "$values" \
 assert_yq "$values" \
   '(.valkey.persistence.data.type // null) == null and (.valkey.persistence.data.accessMode // null) == null' \
   'disabled valkey values must not carry invalid emptyDir persistence fields'
+assert_yq "$values" \
+  '.immich.persistence.library.existingClaim == "immich-production-smb-claim"' \
+  'disabled Immich values must select the production media claim'
 
 work_dir=$(mktemp -d "${TMPDIR:-/tmp}/immich-migration-contract.XXXXXX")
 cleanup() {
@@ -122,6 +125,24 @@ default_render="$work_dir/default.yaml"
 if ! kustomize build --enable-helm "$repo_dir/apps/immich" >"$default_render" 2>"$work_dir/kustomize.err"; then
   fail 'default Immich kustomization did not render'
 fi
+
+object_count=$(yq eval-all '[select(has("kind"))] | length' "$default_render")
+[ "$object_count" = "8" ] || fail "disabled default render must contain exactly eight objects (got $object_count)"
+
+expected_inventory=$(printf '%s\n' \
+  'ConfigMap immich-immich-config' \
+  'ExternalSecret immich-database-credentials' \
+  'ExternalSecret immich-postgres-credentials' \
+  'ExternalSecret smb-creds' \
+  'PersistentVolume immich-production-smb' \
+  'PersistentVolumeClaim immich-production-smb-claim' \
+  'PersistentVolume immich-smb' \
+  'PersistentVolumeClaim immich-smb-claim' | sort)
+actual_inventory=$(yq eval --no-doc 'select(has("kind")) | [.kind, .metadata.name] | join(" ")' "$default_render" | sort)
+[ "$actual_inventory" = "$expected_inventory" ] || {
+  printf 'expected disabled inventory:\n%s\nactual disabled inventory:\n%s\n' "$expected_inventory" "$actual_inventory" >&2
+  fail 'disabled default render inventory changed'
+}
 
 if yq -e 'select(.kind == "Deployment" or .kind == "StatefulSet" or .kind == "DaemonSet" or .kind == "Job" or .kind == "CronJob")' "$default_render" >/dev/null 2>&1; then
   fail 'default staging render contains an active application workload'
@@ -137,11 +158,17 @@ if yq -e 'select(.kind != "PersistentVolume" and .metadata.namespace != "immich"
 fi
 
 assert_yq "$default_render" \
-  'select(.kind == "PersistentVolume" and .metadata.name == "immich-smb") | .spec.persistentVolumeReclaimPolicy == "Retain" and .metadata.annotations["argocd.argoproj.io/sync-options"] == "Prune=false"' \
-  'media PersistentVolume must be Retain and protected from Argo pruning'
+  'select(.kind == "PersistentVolume" and .metadata.name == "immich-smb") | (.spec.persistentVolumeReclaimPolicy == "Retain" and .metadata.annotations["argocd.argoproj.io/sync-options"] == "Prune=false" and .spec.csi.volumeAttributes.source == "//192.168.0.173/immich")' \
+  'preserved media PersistentVolume must remain Retain, protected from pruning, and target the original share'
 assert_yq "$default_render" \
   'select(.kind == "PersistentVolumeClaim" and .metadata.name == "immich-smb-claim") | .spec.volumeName == "immich-smb"' \
   'media PersistentVolumeClaim must continue to bind the existing media volume'
+assert_yq "$default_render" \
+  'select(.kind == "PersistentVolume" and .metadata.name == "immich-production-smb") | (.spec.persistentVolumeReclaimPolicy == "Retain" and .metadata.annotations["argocd.argoproj.io/sync-options"] == "Prune=false" and .spec.storageClassName == "smb" and .spec.csi.driver == "smb.csi.k8s.io" and .spec.csi.volumeHandle == "smb-server.default.svc.cluster.local/immich-production##" and .spec.csi.volumeHandle != "smb-server.default.svc.cluster.local/share##" and .spec.csi.volumeAttributes.source == "//192.168.0.173/immich-production" and .spec.csi.nodeStageSecretRef.name == "smb-creds" and .spec.csi.nodeStageSecretRef.namespace == "immich")' \
+  'production media PersistentVolume must be distinct, Retain, protected from pruning, and target the verified production share'
+assert_yq "$default_render" \
+  'select(.kind == "PersistentVolumeClaim" and .metadata.name == "immich-production-smb-claim") | (.spec.volumeName == "immich-production-smb" and .spec.storageClassName == "smb" and .spec.accessModes[0] == "ReadWriteMany")' \
+  'production media PersistentVolumeClaim must bind the distinct production media volume'
 
 active_render="$work_dir/active.yaml"
 if ! helm template immich "$chart_dir" --namespace immich --values "$values" \
