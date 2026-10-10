@@ -78,13 +78,15 @@ if ! kustomize build --enable-helm "$repo_dir/apps/immich" >"$default_render" 2>
 fi
 
 object_count=$(yq eval-all '[select(has("kind"))] | length' "$default_render")
-[ "$object_count" = "6" ] || fail "disabled default render must contain exactly six objects (got $object_count)"
+[ "$object_count" = "8" ] || fail "disabled default render must contain exactly eight objects (got $object_count)"
 
 expected_inventory=$(printf '%s\n' \
   'ConfigMap immich-immich-config' \
   'ExternalSecret immich-database-credentials' \
   'ExternalSecret immich-postgres-credentials' \
   'ExternalSecret smb-creds' \
+  'PersistentVolume immich-production-smb' \
+  'PersistentVolumeClaim immich-production-smb-claim' \
   'PersistentVolume immich-smb' \
   'PersistentVolumeClaim immich-smb-claim' | sort)
 actual_inventory=$(yq eval --no-doc 'select(has("kind")) | [.kind, .metadata.name] | join(" ")' "$default_render" | sort)
@@ -97,4 +99,4 @@ if yq -e 'select(.kind == "Deployment" or .kind == "StatefulSet" or .kind == "Da
   fail 'disabled default render contains a workload, CNPG Cluster, route, or preparation-only local storage resource'
 fi
 
-printf 'immich storage preparation: ok (six disabled objects; local storage and import resources remain excluded)\n'
+printf 'immich storage preparation: ok (eight disabled objects; production media is staged and local storage/import resources remain excluded)\n'
